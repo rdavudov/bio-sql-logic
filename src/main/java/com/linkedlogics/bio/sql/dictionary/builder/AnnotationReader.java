@@ -17,6 +17,8 @@ import com.linkedlogics.bio.dictionary.builder.DictionaryReader;
 import com.linkedlogics.bio.exception.DictionaryException;
 import com.linkedlogics.bio.expression.Dynamic;
 import com.linkedlogics.bio.sql.BioSqlDictionary;
+import com.linkedlogics.bio.sql.annotation.BioRemoteSqlRelationTag;
+import com.linkedlogics.bio.sql.annotation.BioRemoteSqlRelationTags;
 import com.linkedlogics.bio.sql.annotation.BioRemoteSqlTag;
 import com.linkedlogics.bio.sql.annotation.BioRemoteSqlTags;
 import com.linkedlogics.bio.sql.annotation.BioSql;
@@ -54,7 +56,7 @@ public class AnnotationReader implements DictionaryReader {
 		}
 		
 		try (ScanResult scanResult = graph.scan()) {
-			// Finding all bio objects
+			// Finding all bio objects which has @BioSql
 			for (ClassInfo classInfo : scanResult.getClassesWithAnnotation(com.linkedlogics.bio.sql.annotation.BioSql.class.getName())) {
 				if (!checkProfile(classInfo.getName(), builder.getProfiles(), builder.isOnlyProfiles())) {
 					continue ;
@@ -65,7 +67,7 @@ public class AnnotationReader implements DictionaryReader {
 				}
 			}
 			
-			
+			// find all remote objs 
 			for (ClassInfo classInfo : scanResult.getClassesWithAnnotation(com.linkedlogics.bio.annotation.BioRemoteObj.class.getName())) {
 				if (!checkProfile(classInfo.getName(), builder.getProfiles(), builder.isOnlyProfiles())) {
 					continue ;
@@ -75,6 +77,7 @@ public class AnnotationReader implements DictionaryReader {
 				BioRemoteObj remoteAnnotation = (BioRemoteObj) bioRemoteClass.getAnnotation(BioRemoteObj.class) ;
 				Field[] fields = bioRemoteClass.getDeclaredFields();
 				for (int j = 0; j < fields.length; j++) {
+					// process remote sql tag
 					if (fields[j].isAnnotationPresent(BioRemoteSqlTag.class)) {
 						try {
 							BioRemoteSqlTag annotation = fields[j].getAnnotation(BioRemoteSqlTag.class);
@@ -92,6 +95,7 @@ public class AnnotationReader implements DictionaryReader {
 						} catch (Throwable e) {
 							throw new DictionaryException(e) ;
 						}
+					// process remote sql tag array
 					} else if (fields[j].isAnnotationPresent(BioRemoteSqlTags.class)) {
 						BioRemoteTag[] array = (BioRemoteTag[]) fields[j].getAnnotationsByType(BioRemoteTag.class) ;
 						for (int k = 0; k < array.length; k++) {
@@ -113,13 +117,51 @@ public class AnnotationReader implements DictionaryReader {
 								throw new DictionaryException(e) ;
 							}
 						}
-					}
+					// process remote sql relation
+					} else if (fields[j].isAnnotationPresent(BioRemoteSqlRelationTag.class)) {
+						try {
+							BioRemoteSqlRelationTag annotation = fields[j].getAnnotation(BioRemoteSqlRelationTag.class);
+							BioObj obj = BioDictionary.getOrCreateDictionary(remoteAnnotation.dictionary()).getObjByType(annotation.obj()) ;
+							if (obj != null) {
+								BioRelation relation = createRelation(fields[j], obj) ;
+								if (relation != null) {
+									BioTable table =  BioSqlDictionary.getOrCreateDictionary(obj.getDictionary()).getTableByCode(obj.getCode()) ;
+									if (table != null) {
+										table.addRelation(relation);
+									}
+								}
+							}
+							
+						} catch (Throwable e) {
+							throw new DictionaryException(e) ;
+						}
+					// process remote sql relations
+					} else if (fields[j].isAnnotationPresent(BioRemoteSqlRelationTags.class)) {
+						BioRemoteSqlRelationTag[] array = (BioRemoteSqlRelationTag[]) fields[j].getAnnotationsByType(BioRemoteSqlRelationTag.class) ;
+						for (int k = 0; k < array.length; k++) {
+							try {
+								BioRemoteSqlRelationTag annotation = array[k] ;
+								
+								BioObj obj = BioDictionary.getOrCreateDictionary(remoteAnnotation.dictionary()).getObjByType(annotation.obj()) ;
+								if (obj != null) {
+									BioRelation relation = createRelation(fields[j], obj) ;
+									if (relation != null) {
+										BioTable table =  BioSqlDictionary.getOrCreateDictionary(obj.getDictionary()).getTableByCode(obj.getCode()) ;
+										if (table != null) {
+											table.addRelation(relation);
+										}
+									}
+								}
+								
+							} catch (Throwable e) {
+								throw new DictionaryException(e) ;
+							}
+						}
+					} 
 				}
 			}
 		}
 
-		// Finding all remote tag contained objects
-		
 	}
 
 	private BioTable createTable(String tableClassName) {

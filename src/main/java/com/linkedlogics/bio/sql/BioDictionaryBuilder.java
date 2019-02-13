@@ -86,9 +86,7 @@ public class BioDictionaryBuilder extends com.linkedlogics.bio.BioDictionaryBuil
 		
 		BioSqlDictionary.getDictionaryMap().entrySet().stream().forEach(e -> {
 			e.getValue().getCodeMap().entrySet().stream().forEach(t -> {
-				t.getValue().getRelations().stream().forEach(r -> {
-					r.setWhere(SqlUtility.generateWhereRelation(r));
-				});
+				t.getValue().generateRelations(); 
 			});
 		});
 		

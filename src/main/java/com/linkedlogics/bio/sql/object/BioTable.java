@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.linkedlogics.bio.BioDictionary;
 import com.linkedlogics.bio.dictionary.BioObj;
@@ -33,6 +34,7 @@ public class BioTable {
 	private String count ;
 	private Where where ;
 	private Where whereWithVersion ;
+	private HashMap<String, BioRelation> relationByTagMap = new HashMap<String, BioRelation>() ;
 	private List<BioRelation> relations = new ArrayList<BioRelation>() ;
 	
 	public BioTable(int dictionary, int code) {
@@ -70,7 +72,7 @@ public class BioTable {
 	}
 	
 	public void addRelation(BioRelation relation) {
-		this.relations.add(relation) ;
+		this.relationByTagMap.put(relation.getTag().getName(), relation) ;
 	}
 	
 	public List<BioRelation> getRelations() {
@@ -99,6 +101,13 @@ public class BioTable {
 		this.count = SqlUtility.generateCount(this) ;
 		this.where = SqlUtility.generateWhere(this) ;
 		this.whereWithVersion = SqlUtility.generateWhereWithVersion(this) ;
+	}
+	
+	public void generateRelations() {
+		this.relations = this.relationByTagMap.values().stream().collect(Collectors.toList()) ;
+		this.relations.forEach(r -> {
+			r.setWhere(SqlUtility.generateWhereRelation(r));
+		});
 	}
 	
 	public BioColumn getColumnByTag(String tag) {

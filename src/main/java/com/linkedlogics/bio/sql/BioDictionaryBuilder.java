@@ -6,12 +6,16 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.linkedlogics.bio.BioDictionary;
 import com.linkedlogics.bio.dictionary.builder.DictionaryReader;
 import com.linkedlogics.bio.exception.DictionaryException;
 import com.linkedlogics.bio.sql.dictionary.builder.AnnotationReader;
 import com.linkedlogics.bio.sql.dictionary.builder.XmlReader;
 
+/**
+ * Dictionary builder for sql tables
+ * @author rajab
+ *
+ */
 public class BioDictionaryBuilder extends com.linkedlogics.bio.BioDictionaryBuilder {
 	protected List<DictionaryReader> readers = new ArrayList<DictionaryReader>();
 	
@@ -72,6 +76,7 @@ public class BioDictionaryBuilder extends com.linkedlogics.bio.BioDictionaryBuil
 			reader.read(this); 
 		}
 		
+		// generate all sql statements for each table
 		BioSqlDictionary.getDictionaryMap().entrySet().stream().forEach(e -> {
 			e.getValue().getCodeMap().entrySet().stream().forEach(t -> {
 				t.getValue().generate(); 

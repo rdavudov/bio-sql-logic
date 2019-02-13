@@ -9,6 +9,7 @@ import com.linkedlogics.bio.BioExpression;
 import com.linkedlogics.bio.BioObject;
 import com.linkedlogics.bio.sql.exception.SqlException;
 import com.linkedlogics.bio.sql.object.BioColumn;
+import com.linkedlogics.bio.sql.object.BioTable;
 import com.linkedlogics.bio.sql.utility.SqlUtility;
 
 public class Where {

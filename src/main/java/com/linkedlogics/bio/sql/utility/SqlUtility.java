@@ -30,9 +30,9 @@ import com.linkedlogics.bio.exception.ParserException;
 import com.linkedlogics.bio.expression.Dynamic;
 import com.linkedlogics.bio.parser.BioObjectBinaryParser;
 import com.linkedlogics.bio.parser.BioObjectXmlParser;
-import com.linkedlogics.bio.sql.BioTable;
 import com.linkedlogics.bio.sql.Where;
 import com.linkedlogics.bio.sql.object.BioColumn;
+import com.linkedlogics.bio.sql.object.BioTable;
 import com.linkedlogics.bio.utility.ByteUtility;
 import com.linkedlogics.bio.utility.ConversionUtility;
 
@@ -240,7 +240,6 @@ public class SqlUtility {
             ps.setNull(index, sqlType);
             return;
         }
-        System.out.println(index + "=" + value);
         switch (sqlType) {
             case Types.VARCHAR:
             	if (value instanceof String) {

@@ -14,6 +14,7 @@ import com.linkedlogics.bio.parser.BioObjectBinaryParser;
 import com.linkedlogics.bio.parser.BioObjectXmlParser;
 import com.linkedlogics.bio.sql.exception.SqlException;
 import com.linkedlogics.bio.sql.object.BioColumn;
+import com.linkedlogics.bio.sql.object.BioTable;
 import com.linkedlogics.bio.sql.utility.SqlUtility;
 
 /**
@@ -48,8 +49,21 @@ public class BioSql<T extends BioObject> {
 	 */
 	private BioObjectXmlParser xmlParser ;
 
-	public BioSql(BioTable table) {
-		this.table = table;
+	/**
+	 * Creates sql object with table according bio code
+	 * @param code
+	 */
+	public BioSql(int code) {
+		this(0, code) ;
+	}
+	
+	/**
+	 * Creates sql object with table according bio code and dictionary
+	 * @param dictionary
+	 * @param code
+	 */
+	public BioSql(int dictionary, int code) {
+		this.table = BioSqlDictionary.getDictionary(dictionary).getTableByCode(code) ;
 		this.binaryParser = new BioObjectBinaryParser() ;
 		this.xmlParser = new BioObjectXmlParser() ;
 		this.isLazy = true ;

@@ -17,12 +17,12 @@ import com.linkedlogics.bio.dictionary.builder.DictionaryReader;
 import com.linkedlogics.bio.exception.DictionaryException;
 import com.linkedlogics.bio.expression.Dynamic;
 import com.linkedlogics.bio.sql.BioSqlDictionary;
-import com.linkedlogics.bio.sql.BioTable;
 import com.linkedlogics.bio.sql.annotation.BioRemoteSqlTag;
 import com.linkedlogics.bio.sql.annotation.BioRemoteSqlTags;
 import com.linkedlogics.bio.sql.annotation.BioSql;
 import com.linkedlogics.bio.sql.annotation.BioSqlTag;
 import com.linkedlogics.bio.sql.object.BioColumn;
+import com.linkedlogics.bio.sql.object.BioTable;
 import com.linkedlogics.bio.sql.utility.SqlUtility;
 import com.linkedlogics.bio.utility.POJOUtility;
 

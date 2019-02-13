@@ -3,7 +3,13 @@ package com.linkedlogics.bio.sql;
 import java.util.HashMap;
 
 import com.linkedlogics.bio.exception.DictionaryException;
+import com.linkedlogics.bio.sql.object.BioTable;
 
+/**
+ * Dictionary for storing table definitions
+ * @author rdavudov
+ *
+ */
 public class BioSqlDictionary {
 	private int code ;
 	

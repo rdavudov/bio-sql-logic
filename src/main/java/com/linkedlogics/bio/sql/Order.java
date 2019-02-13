@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.linkedlogics.bio.dictionary.BioObj;
 import com.linkedlogics.bio.sql.object.BioColumn;
+import com.linkedlogics.bio.sql.object.BioTable;
 
 public class Order {
 	private List<String> tagList = new ArrayList<String>() ;

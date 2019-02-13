@@ -1,13 +1,18 @@
-package com.linkedlogics.bio.sql;
+package com.linkedlogics.bio.sql.object;
 
 import java.util.Arrays;
 import java.util.HashMap;
 
 import com.linkedlogics.bio.BioDictionary;
 import com.linkedlogics.bio.dictionary.BioObj;
-import com.linkedlogics.bio.sql.object.BioColumn;
+import com.linkedlogics.bio.sql.Where;
 import com.linkedlogics.bio.sql.utility.SqlUtility;
 
+/**
+ * Bio table definition object represents a table
+ * @author rdavudov
+ *
+ */
 public class BioTable {
 	private BioObj obj ;
 	private String schema ;
@@ -61,7 +66,7 @@ public class BioTable {
 		this.columnByTagMap.put(column.getTag().getName(), column) ;
 	}
 	
-	void generate() {
+	public void generate() {
 		this.columnByTagMap.entrySet().stream().forEach(e -> {
 			this.columnByNameMap.put(e.getValue().getColumn(), e.getValue()) ;
 		});

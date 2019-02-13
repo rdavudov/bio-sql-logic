@@ -9,6 +9,12 @@ import com.linkedlogics.bio.BioObject;
 import com.linkedlogics.bio.sql.exception.SqlException;
 import com.linkedlogics.bio.sql.utility.SqlUtility;
 
+/**
+ * Iterator for iterating large sets of bio object result
+ * @author rdavudov
+ *
+ * @param <T>
+ */
 public class BioCursor<T extends BioObject> implements Iterator<T> {
 	private BioSql<T> sql ;
 	private ResultSet rs ;
@@ -20,6 +26,9 @@ public class BioCursor<T extends BioObject> implements Iterator<T> {
 		this.ps = ps ;
 	}
 	
+	/**
+	 * Returns true if the iteration has more elements.
+	 */
 	public boolean hasNext() {
 		if (rs != null) {
 			try {
@@ -36,6 +45,9 @@ public class BioCursor<T extends BioObject> implements Iterator<T> {
 		return false;
 	}
 
+	/**
+	 * Returns the next bio object in the iteration.
+	 */
 	public T next() {
 		try {
 			T newObject = (T) sql.create() ;

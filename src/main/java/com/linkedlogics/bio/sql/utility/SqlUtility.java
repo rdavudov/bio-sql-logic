@@ -22,6 +22,7 @@ import org.json.JSONObject;
 
 import com.linkedlogics.bio.BioDictionary;
 import com.linkedlogics.bio.BioEnum;
+import com.linkedlogics.bio.BioExpression;
 import com.linkedlogics.bio.BioObject;
 import com.linkedlogics.bio.BioTime;
 import com.linkedlogics.bio.dictionary.BioEnumObj;
@@ -341,6 +342,27 @@ public class SqlUtility {
 		}
 		return index;
 	}
+	
+    public static int setWhereParameters(BioObject object, Where where, PreparedStatement ps, int index) throws SQLException {
+        if (where != null) {
+        	HashMap<Integer, Object> valueMap = where.getValueMap();
+            for (int i = 0; i < valueMap.size(); i++) {
+                index = index + 1;
+                Object value = valueMap.get(i + 1);
+                
+                if (value instanceof BioExpression) {
+                	value = ((BioExpression) value).getValue(object) ;
+                }
+
+                if (value != null) {
+                	SqlUtility.setParameter(ps, index, where.getType(i + 1), value);
+                } else {
+                	SqlUtility.setNull(ps, index, where.getType(i + 1));
+                }
+            }
+        }
+        return index;
+    }
 	
     public static void setParameter(PreparedStatement ps, int index, int sqlType, Object value) throws SQLException {
         switch (sqlType) {

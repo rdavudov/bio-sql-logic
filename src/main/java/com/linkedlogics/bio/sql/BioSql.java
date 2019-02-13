@@ -28,27 +28,27 @@ public class BioSql<T extends BioObject> {
 	/**
 	 * database connection
 	 */
-	private Connection connection ;
+	protected Connection connection ;
 	/**
 	 * table object to work on
 	 */
-	private BioTable table ;
+	protected BioTable table ;
 	/**
 	 * if lazy doesn't consider relations
 	 */
-	private boolean isLazy ;
+	protected boolean isLazy ;
 	/**
 	 * connection auto commit flag
 	 */
-	private boolean isAutoCommit ;
+	protected boolean isAutoCommit ;
 	/**
 	 * parser for parsing HEX values
 	 */
-	private BioObjectBinaryParser binaryParser ;
+	protected BioObjectBinaryParser binaryParser ;
 	/**
 	 * parser for parsin XML values
 	 */
-	private BioObjectXmlParser xmlParser ;
+	protected BioObjectXmlParser xmlParser ;
 
 	/**
 	 * Creates sql object with table according bio code
@@ -240,7 +240,7 @@ public class BioSql<T extends BioObject> {
 		List<T> list = new LinkedList<T>();
 
 		try (PreparedStatement ps = connection.prepareStatement(sql)) {
-			setWhereParameters(object, where, ps, 0) ;
+			SqlUtility.setWhereParameters(object, where, ps, 0) ;
 
 			try (ResultSet rs = ps.executeQuery()) {
 				while (rs.next()) {
@@ -293,7 +293,7 @@ public class BioSql<T extends BioObject> {
 	public int count(BioObject object, Where where) throws SQLException {
 		String sql = getSql(table.getCount(), where, null) ;
 		try (PreparedStatement ps = connection.prepareStatement(sql)) {
-			setWhereParameters(object, where, ps, 0) ;
+			SqlUtility.setWhereParameters(object, where, ps, 0) ;
 			try (ResultSet rs = ps.executeQuery()) {
 	            if (rs.next()) {
 	                return rs.getInt(1);
@@ -347,7 +347,7 @@ public class BioSql<T extends BioObject> {
 
 		PreparedStatement ps = connection.prepareStatement(sql)  ;
 		try {
-			setWhereParameters(object, where, ps, 0) ;
+			SqlUtility.setWhereParameters(object, where, ps, 0) ;
 
 			return new BioCursor<T>(this, ps.executeQuery(), ps) ;
 		} catch (Throwable e) {
@@ -418,7 +418,7 @@ public class BioSql<T extends BioObject> {
 				
 				SqlUtility.setParameters(ps, i + 1, value, column, binaryParser, xmlParser) ;
 			}
-			setWhereParameters(object, where, ps, table.getColumns().length) ;
+			SqlUtility.setWhereParameters(object, where, ps, table.getColumns().length) ;
 			int result = ps.executeUpdate();
 			
             // if it is NOT lazy then we try to update related bio objects also
@@ -466,7 +466,7 @@ public class BioSql<T extends BioObject> {
 					SqlUtility.setParameters(ps, index, value, column, binaryParser, xmlParser) ;
 				}
 			}
-			setWhereParameters(object, where, ps, index) ;
+			SqlUtility.setWhereParameters(object, where, ps, index) ;
 			int result = ps.executeUpdate();
             // if it is NOT lazy then we try to merge related bio objects also
 			if (result > 0 && !isLazy && table.getRelations().size() > 0) {
@@ -509,7 +509,7 @@ public class BioSql<T extends BioObject> {
 		setAutoCommitOff();
 		String sql = getSql(table.getDelete(), where, null);
 		try (PreparedStatement ps = connection.prepareStatement(sql) ;) {
-			setWhereParameters(object, where, ps, 0) ;
+			SqlUtility.setWhereParameters(object, where, ps, 0) ;
 			int result = ps.executeUpdate();
             setAutoCommitOn(true);
             // if it is NOT lazy then we try to delete related bio objects also
@@ -713,35 +713,15 @@ public class BioSql<T extends BioObject> {
 	}
 	
 	/**
-	 * Sets where parameters
-	 * @param object
+	 * Finalizes sql by adding where
+	 * @param sql
 	 * @param where
-	 * @param ps
-	 * @param index
 	 * @return
-	 * @throws SQLException
 	 */
-    protected int setWhereParameters(BioObject object, Where where, PreparedStatement ps, int index) throws SQLException {
-        if (where != null) {
-        	HashMap<Integer, Object> valueMap = where.getValueMap();
-            for (int i = 0; i < valueMap.size(); i++) {
-                index = index + 1;
-                Object value = valueMap.get(i + 1);
-                
-                if (value instanceof BioExpression) {
-                	value = ((BioExpression) value).getValue(object) ;
-                }
-                
-                if (value != null) {
-                    SqlUtility.setParameter(ps, index, where.getType(i + 1), value);
-                } else {
-                	 SqlUtility.setNull(ps, index, where.getType(i + 1));
-                }
-            }
-        }
-        return index;
-    }
-
+	protected String getSql(String sql, Where where) {
+		return getSql(sql, where, null) ;
+	}
+	
     /**
      * Creates an empty bio object
      * @return

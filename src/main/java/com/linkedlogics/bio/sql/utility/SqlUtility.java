@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -30,8 +31,10 @@ import com.linkedlogics.bio.exception.ParserException;
 import com.linkedlogics.bio.expression.Dynamic;
 import com.linkedlogics.bio.parser.BioObjectBinaryParser;
 import com.linkedlogics.bio.parser.BioObjectXmlParser;
+import com.linkedlogics.bio.sql.BioSqlDictionary;
 import com.linkedlogics.bio.sql.Where;
 import com.linkedlogics.bio.sql.object.BioColumn;
+import com.linkedlogics.bio.sql.object.BioRelation;
 import com.linkedlogics.bio.sql.object.BioTable;
 import com.linkedlogics.bio.utility.ByteUtility;
 import com.linkedlogics.bio.utility.ConversionUtility;
@@ -137,6 +140,24 @@ public class SqlUtility {
 		return new Where(where, valueMap, typeMap) ;
 	}
 	
+	public static Where generateWhereRelation(BioRelation relation) {
+		HashMap<Integer, Object> valueMap = new HashMap<Integer, Object>() ;
+		HashMap<Integer, Integer> typeMap = new HashMap<Integer, Integer>() ;
+		AtomicInteger index = new AtomicInteger(1) ;
+		
+		BioTable table = BioSqlDictionary.getDictionary(relation.getTag().getObj().getDictionary()).getTableByCode(relation.getTag().getObj().getCode()) ;
+		
+		String where = IntStream.range(0, relation.getToKeys().length).mapToObj(i -> {
+			BioColumn column = table.getColumnByName(relation.getToKeys()[i]) ;
+			valueMap.put(index.get(), new Dynamic(relation.getRelateKeys()[i])) ;
+			typeMap.put(index.get(), column.getSqlType()) ;
+			index.getAndIncrement() ;
+			return column.getColumn() + " = ?" ;
+		}).collect(Collectors.joining(" and ")) ;
+		
+		return new Where(where, valueMap, typeMap) ;
+	}
+	
 	public static Where generateWhereWithVersion(BioTable table) {
 		HashMap<Integer, Object> valueMap = new HashMap<Integer, Object>() ;
 		HashMap<Integer, Integer> typeMap = new HashMap<Integer, Integer>() ;
@@ -234,12 +255,94 @@ public class SqlUtility {
 		}
 		return -1 ;
 	}
+
+	public static int setParameters(PreparedStatement ps, int index, Object value, BioColumn column, BioObjectBinaryParser binaryParser, BioObjectXmlParser xmlParser) throws SQLException {
+		if (value != null) {
+			if (column.isBlob()) {
+				if (value instanceof Byte[]) {
+					setParameter(ps, index, Types.BLOB, value);
+				} else if (column.isCompressed()) {
+					setParameter(ps, index, Types.BLOB, binaryParser.encode(value, true)) ;
+				} else {
+					setParameter(ps, index, Types.BLOB, binaryParser.encode(value)) ;
+				}
+			} else if (column.isJson()) {
+				if (column.isArray()) {
+					JSONArray jsonArray = new JSONArray();
+					BioObject[] array = (BioObject[]) value;
+					for (int i = 0; i < array.length; i++) {
+						jsonArray.put(((BioObject) array[i]).toJson()) ;
+					}
+					if (column.isCompressed()) {
+						setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, jsonArray.toString());
+					} else {
+						setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, jsonArray.toString(4));
+					}
+				} else if (column.isList()) {	
+					JSONArray jsonArray = new JSONArray();
+					List<BioObject> list = (List<BioObject>) value;
+					for (int i = 0; i < list.size(); i++) {
+						jsonArray.put(list.get(i).toJson()) ;
+					}
+					if (column.isCompressed()) {
+						setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, jsonArray.toString());
+					} else {
+						setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, jsonArray.toString(4));
+					}
+				} else {
+					if (column.isCompressed()) {
+						setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, ((BioObject) value).toJson().toString());
+					} else {
+						setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, ((BioObject) value).toJson().toString(4));
+					}
+				}
+			} else if (column.isXml()) {
+				String xml = ((BioObject) value).toXml() ;
+				setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, xml);
+			} else if (column.isHex()) {
+				if (column.isCompressed()) {
+					setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, ByteUtility.bytesToHex(binaryParser.encode(value, true)));
+				} else {
+					setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, ByteUtility.bytesToHex(binaryParser.encode(value)));
+				}
+			} else if (column.isArray()) {
+				Object[] array = (Object[]) value;
+				
+				String arrayStr = Arrays.stream(array).map(e -> {
+					if (e instanceof BioEnum && !column.isEnumAsString()) {
+						return String.valueOf(((BioEnum) e).intValue()) ;
+					} else {
+						return e.toString() ;
+					}
+				}).collect(Collectors.joining(",")) ;
+				
+				setParameter(ps, index, Types.VARCHAR, arrayStr);
+			} else if (column.isList()) {
+				List<Object> list = (List<Object>) value;
+				
+				String listStr = list.stream().map(e -> {
+					if (e instanceof BioEnum && !column.isEnumAsString()) {
+						return String.valueOf(((BioEnum) e).intValue()) ;
+					} else {
+						return e.toString() ;
+					}
+				}).collect(Collectors.joining(",")) ;
+				
+				setParameter(ps, index, Types.VARCHAR, listStr);
+			} else {
+				if (value instanceof BioEnum && column.isEnumAsString()) {
+					setParameter(ps, index, Types.VARCHAR, value);
+				} else {
+					setParameter(ps, index, column.getSqlType(), value);
+				}
+			}
+		} else {
+			setNull(ps, index, column.getSqlType());
+		}
+		return index;
+	}
 	
     public static void setParameter(PreparedStatement ps, int index, int sqlType, Object value) throws SQLException {
-        if (value == null) {
-            ps.setNull(index, sqlType);
-            return;
-        }
         switch (sqlType) {
             case Types.VARCHAR:
             	if (value instanceof String) {

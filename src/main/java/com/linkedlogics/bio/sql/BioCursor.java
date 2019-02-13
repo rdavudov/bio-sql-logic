@@ -60,6 +60,10 @@ public class BioCursor<T extends BioObject> implements Iterator<T> {
 				}
 			}
 			
+			if (!sql.isLazy()) {
+				sql.selectRelations(newObject);
+			}
+			
 			return newObject ;
 		} catch (Throwable e) {
 			throw new SqlException(e) ;

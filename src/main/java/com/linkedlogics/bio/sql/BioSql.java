@@ -1,5 +1,6 @@
 package com.linkedlogics.bio.sql;
 
+import java.lang.reflect.Array;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -169,28 +170,34 @@ public class BioSql<T extends BioObject> {
 			throw new SqlException(table.getTable() + " has more than one primary key columns use select() method") ;
 		}
 
+		T object = null ;
+		
 		String sql = getSql(table.getSelect(), table.getWhere(), null) ;
 		try (PreparedStatement ps = connection.prepareStatement(sql)) {
 			SqlUtility.setParameter(ps, 1, table.getWhere().getType(1), key);
 			try (ResultSet rs = ps.executeQuery()) {
 				if (rs.next()) {
-					T newObject = (T) create() ;
+					object = (T) create() ;
 					int index = 0;
 					for (int i = 0; i < table.getColumns().length; i++) {
 						index = index + 1;
 						Object value = SqlUtility.getParameter(rs, index, table.getColumns()[i], binaryParser, xmlParser);
 						if (value != null) {
-							newObject.put(table.getColumns()[i].getTag().getName(), value);
+							object.put(table.getColumns()[i].getTag().getName(), value);
 						}
 					}
-
-					return newObject ;
 				}
 			}
 		} catch (Throwable e) {
 			throw new SqlException(e) ;
 		}
-		return null ;
+		
+		// if it is NOT lazy then we try to load related bio objects also
+		if (object != null && !isLazy && table.getRelations().size() > 0) {
+			selectRelations(object);
+		}
+		
+		return object ;
 	}
 	/**
 	 * Selects full table
@@ -252,9 +259,54 @@ public class BioSql<T extends BioObject> {
 		} catch (Throwable e) {
 			throw new SqlException(e) ;
 		}
-
+		
+		// if it is NOT lazy then we try to load related bio objects also
+		if (list.size() > 0 && !isLazy && table.getRelations().size() > 0) {
+			list.stream().forEach(o -> {
+				try {
+					selectRelations(o);
+				} catch (SQLException e) {
+					throw new SqlException(e) ;
+				}
+			});
+		}
+		
 		return list ;
 	}
+
+	/**
+	 * Returns count of object
+	 * @param object
+	 * @return
+	 * @throws SQLException
+	 */
+	public int count(T object) throws SQLException {
+		return count(object, table.getWhere());
+	}
+	/**
+	 * Returns count of objects
+	 * @param object
+	 * @param where
+	 * @return
+	 * @throws SQLException
+	 */
+	public int count(BioObject object, Where where) throws SQLException {
+		String sql = getSql(table.getCount(), where, null) ;
+		try (PreparedStatement ps = connection.prepareStatement(sql)) {
+			setWhereParameters(object, where, ps, 0) ;
+			try (ResultSet rs = ps.executeQuery()) {
+	            if (rs.next()) {
+	                return rs.getInt(1);
+	            }
+			}
+		} catch (Throwable e) {
+			throw new SqlException(e) ;
+		}
+		return 0 ;
+	}
+	
+	
+	
 	/**
 	 * Iterates all objects
 	 * @return
@@ -317,14 +369,16 @@ public class BioSql<T extends BioObject> {
             	if (value instanceof BioExpression) {
                 	value = ((BioExpression) value).getValue(object) ;
                 }
-            	if (value != null) {
-            		SqlUtility.setParameter(ps, i + 1, column.getSqlType(), value);
-            	} else {
-            		SqlUtility.setNull(ps, i + 1, column.getSqlType());
-            	}
+            	
+            	SqlUtility.setParameters(ps, i + 1, value, column, binaryParser, xmlParser) ;
             }
-            
             int result = ps.executeUpdate();
+            
+            // if it is NOT lazy then we try to insert related bio objects also
+            if (result > 0 && !isLazy && table.getRelations().size() > 0) {
+				insertRelations((T) object) ;
+			}
+            
             setAutoCommitOn(true);
             return result ;
 		} catch (SQLException e) {
@@ -361,14 +415,17 @@ public class BioSql<T extends BioObject> {
 				if (value instanceof BioExpression) {
                 	value = ((BioExpression) value).getValue(object) ;
                 }
-				if (value != null) {
-					SqlUtility.setParameter(ps, i + 1, column.getSqlType(), value);
-				} else {
-					SqlUtility.setNull(ps, i + 1, column.getSqlType());
-				}
+				
+				SqlUtility.setParameters(ps, i + 1, value, column, binaryParser, xmlParser) ;
 			}
 			setWhereParameters(object, where, ps, table.getColumns().length) ;
 			int result = ps.executeUpdate();
+			
+            // if it is NOT lazy then we try to update related bio objects also
+			if (result > 0 && !isLazy && table.getRelations().size() > 0) {
+				updateRelations((T) object) ;
+			}
+			
             setAutoCommitOn(true);
             return result ;
 		} catch (Throwable e) {
@@ -405,16 +462,17 @@ public class BioSql<T extends BioObject> {
 					if (value instanceof BioExpression) {
 						value = ((BioExpression) value).getValue(object) ;
 					}
-					if (value != null) {
-						SqlUtility.setParameter(ps, index, column.getSqlType(), value);
-					} else {
-						SqlUtility.setNull(ps, index, column.getSqlType());
-					}
+					
+					SqlUtility.setParameters(ps, index, value, column, binaryParser, xmlParser) ;
 				}
 			}
-			
 			setWhereParameters(object, where, ps, index) ;
 			int result = ps.executeUpdate();
+            // if it is NOT lazy then we try to merge related bio objects also
+			if (result > 0 && !isLazy && table.getRelations().size() > 0) {
+				mergeRelations((T) object) ;
+			}
+			
             setAutoCommitOn(true);
             return result ;
 		} catch (Throwable e) {
@@ -447,18 +505,194 @@ public class BioSql<T extends BioObject> {
 	 * @return
 	 * @throws SQLException
 	 */
-	private int delete(BioObject object, Where where) throws SQLException {
+	public int delete(BioObject object, Where where) throws SQLException {
 		setAutoCommitOff();
 		String sql = getSql(table.getDelete(), where, null);
 		try (PreparedStatement ps = connection.prepareStatement(sql) ;) {
 			setWhereParameters(object, where, ps, 0) ;
 			int result = ps.executeUpdate();
             setAutoCommitOn(true);
+            // if it is NOT lazy then we try to delete related bio objects also
+            if (result > 0 && !isLazy && table.getRelations().size() > 0) {
+				deleteRelations((T) object) ;
+			}
+            
             return result ;
 		} catch (Throwable e) {
 			setAutoCommitOff(); 
 			throw e ;
 		}
+	}
+	
+	/**
+	 * Selects related bio objects
+	 * @param object
+	 * @throws SQLException
+	 */
+	void selectRelations(T object) throws SQLException {
+		table.getRelations().stream().forEach(r -> {
+			BioSql sql = new BioSql(r.getTag().getObj().getCode()) ;
+			sql.setConnection(connection);
+			sql.setLazy(isLazy);
+			try {
+				List<BioObject> list = sql.select(object, r.getWhere()) ;
+				if (list.size() > 0) {
+					// if bio tag is array or list then we create collection
+					if (r.isMany()) {
+						if (r.getTag().isArray()) {
+							BioObject[] array = (BioObject[]) Array.newInstance(r.getTag().getObj().getBioClass(), list.size());
+							list.toArray(array) ;
+							object.set(r.getTag().getName(), array) ;
+						} else {
+							object.set(r.getTag().getName(), list) ;
+						}
+					// or we just pick the first one
+					} else {
+						object.set(r.getTag().getName(), list.get(0)) ;
+					}
+				}
+			} catch (SQLException e) {
+				throw new SqlException(e) ;
+			}
+		});
+	}
+	
+	/**
+	 * Inserts related bio objects
+	 * @param object
+	 * @throws SQLException
+	 */
+	void insertRelations(T object) throws SQLException {
+		table.getRelations().stream().forEach(r -> {
+			BioSql sql = new BioSql(r.getTag().getObj().getCode()) ;
+			sql.setConnection(connection);
+			sql.setLazy(isLazy);
+			try {
+				// if objects contains related objects
+				if (object.has(r.getTag().getName())) {
+					if (r.isMany()) {
+						if (r.getTag().isArray()) {
+							BioObject[] array = (BioObject[]) object.get(r.getTag().getName()) ;
+							for (int i = 0; i < array.length; i++) {
+								sql.insert(array[i]) ;
+							}
+						} else {
+							List<BioObject> list = (List<BioObject>) object.get(r.getTag().getName()) ;
+							for (BioObject o : list) {
+								sql.insert(o) ;
+							}
+						}
+					} else {
+						sql.insert(object.getBioObject(r.getTag().getName())) ;
+					}
+				}
+			} catch (SQLException e) {
+				throw new SqlException(e) ;
+			}
+		});
+	}
+	/**
+	 * Updates related bio objects
+	 * @param object
+	 * @throws SQLException
+	 */
+	void updateRelations(T object) throws SQLException {
+		table.getRelations().stream().forEach(r -> {
+			BioSql sql = new BioSql(r.getTag().getObj().getCode()) ;
+			sql.setConnection(connection);
+			sql.setLazy(isLazy);
+			try {
+				// first we delete all of them 
+				sql.delete(object, r.getWhere()) ;
+				// then if object contains insert current list
+				if (object.has(r.getTag().getName())) {
+					if (r.isMany()) {
+						if (r.getTag().isArray()) {
+							BioObject[] array = (BioObject[]) object.get(r.getTag().getName()) ;
+							for (int i = 0; i < array.length; i++) {
+								sql.insert(array[i]) ;
+							}
+						} else {
+							List<BioObject> list = (List<BioObject>) object.get(r.getTag().getName()) ;
+							for (BioObject o : list) {
+								sql.insert(o) ;
+							}
+						}
+					} else {
+						sql.insert(object.getBioObject(r.getTag().getName())) ;
+					}
+				}
+			} catch (SQLException e) {
+				throw new SqlException(e) ;
+			}
+		});
+	}
+	
+	/**
+	 * Merges related bio objects
+	 * @param object
+	 * @throws SQLException
+	 */
+	void mergeRelations(T object) throws SQLException {
+		table.getRelations().stream().forEach(r -> {
+			BioSql sql = new BioSql(r.getTag().getObj().getCode()) ;
+			sql.setConnection(connection);
+			sql.setLazy(isLazy);
+			try {
+				// if objects contains new list we do otherwise no change
+				if (object.has(r.getTag().getName())) {
+					if (r.isMany()) {
+						// if it is a collection we only add new ones, and merge old ones we don't remove any of them
+						if (r.getTag().isArray()) {
+							BioObject[] array = (BioObject[]) object.get(r.getTag().getName()) ;
+							for (int i = 0; i < array.length; i++) {
+								if (sql.count(array[i]) == 0) {
+									sql.insert(array[i]) ;
+								} else {
+									sql.merge(array[i]) ;
+								}
+							}
+						} else {
+							List<BioObject> list = (List<BioObject>) object.get(r.getTag().getName()) ;
+							for (BioObject o : list) {
+								if (sql.count(o) == 0) {
+									sql.insert(o) ;
+								} else {
+									sql.merge(o) ;
+								}
+							}
+						}
+					} else {
+						// if it is a single we chech for existence and insert or merge
+						if (sql.count(object.getBioObject(r.getTag().getName())) == 0) {
+							sql.insert(object.getBioObject(r.getTag().getName())) ;
+						} else {
+							sql.merge(object.getBioObject(r.getTag().getName())) ;
+						}
+					}
+				}
+			} catch (SQLException e) {
+				throw new SqlException(e) ;
+			}
+		});
+	}
+	/**
+	 * Deletes related bio objects
+	 * @param object
+	 * @throws SQLException
+	 */
+	public void deleteRelations(T object) throws SQLException {
+		table.getRelations().stream().forEach(r -> {
+			BioSql sql = new BioSql(r.getTag().getObj().getCode()) ;
+			sql.setConnection(connection);
+			sql.setLazy(isLazy);
+			try {
+				// just delete all of them
+				sql.delete(object, r.getWhere()) ;
+			} catch (SQLException e) {
+				throw new SqlException(e) ;
+			}
+		});
 	}
 
 	/**

@@ -10,6 +10,7 @@ import com.linkedlogics.bio.dictionary.builder.DictionaryReader;
 import com.linkedlogics.bio.exception.DictionaryException;
 import com.linkedlogics.bio.sql.dictionary.builder.AnnotationReader;
 import com.linkedlogics.bio.sql.dictionary.builder.XmlReader;
+import com.linkedlogics.bio.sql.utility.SqlUtility;
 
 /**
  * Dictionary builder for sql tables
@@ -19,7 +20,7 @@ import com.linkedlogics.bio.sql.dictionary.builder.XmlReader;
 public class BioDictionaryBuilder extends com.linkedlogics.bio.BioDictionaryBuilder {
 	protected List<DictionaryReader> readers = new ArrayList<DictionaryReader>();
 	
-	
+	@Override
 	public com.linkedlogics.bio.BioDictionaryBuilder addPackage(String packageName) {
 		readers.add(new AnnotationReader()) ;
 		return super.addPackage(packageName);
@@ -82,5 +83,14 @@ public class BioDictionaryBuilder extends com.linkedlogics.bio.BioDictionaryBuil
 				t.getValue().generate(); 
 			});
 		});
+		
+		BioSqlDictionary.getDictionaryMap().entrySet().stream().forEach(e -> {
+			e.getValue().getCodeMap().entrySet().stream().forEach(t -> {
+				t.getValue().getRelations().stream().forEach(r -> {
+					r.setWhere(SqlUtility.generateWhereRelation(r));
+				});
+			});
+		});
+		
 	}
 }

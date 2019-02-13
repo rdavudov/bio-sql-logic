@@ -20,8 +20,10 @@ import com.linkedlogics.bio.sql.BioSqlDictionary;
 import com.linkedlogics.bio.sql.annotation.BioRemoteSqlTag;
 import com.linkedlogics.bio.sql.annotation.BioRemoteSqlTags;
 import com.linkedlogics.bio.sql.annotation.BioSql;
+import com.linkedlogics.bio.sql.annotation.BioSqlRelationTag;
 import com.linkedlogics.bio.sql.annotation.BioSqlTag;
 import com.linkedlogics.bio.sql.object.BioColumn;
+import com.linkedlogics.bio.sql.object.BioRelation;
 import com.linkedlogics.bio.sql.object.BioTable;
 import com.linkedlogics.bio.sql.utility.SqlUtility;
 import com.linkedlogics.bio.utility.POJOUtility;
@@ -154,10 +156,11 @@ public class AnnotationReader implements DictionaryReader {
 			if (schema != null && schema.length() == 0) {
 				schema = null ;
 			}
-			BioTable table = new BioTable(obj, sqlAnnotation.table(), sqlAnnotation.schema()) ;
+			BioTable table = new BioTable(obj, tableName, schema) ;
 		
-			
 			HashMap<String, BioColumn> columnMap = new HashMap<String, BioColumn>();
+			HashMap<String, BioRelation> relationMap = new HashMap<String, BioRelation>();
+			
 			while (bioClass != BioObject.class) {
 				Arrays.stream(bioClass.getDeclaredFields()).filter(f -> {
 					return f.isAnnotationPresent(BioSqlTag.class) ;
@@ -170,11 +173,26 @@ public class AnnotationReader implements DictionaryReader {
 					}
 				}) ;
 				
+				Arrays.stream(bioClass.getDeclaredFields()).filter(f -> {
+					return f.isAnnotationPresent(BioSqlRelationTag.class) ;
+				}).forEach(f -> {
+					try {
+						BioRelation relation = createRelation(f, obj) ;
+						relationMap.putIfAbsent(relation.getTag().getName(), relation) ;
+					} catch (Throwable e) {
+						throw new DictionaryException(e) ;
+					}
+				}) ;
+				
 				bioClass = bioClass.getSuperclass();
 			}
 			
 			columnMap.values().stream().forEach(c -> {
 				table.addColumn(c);
+			});
+			
+			relationMap.values().stream().forEach(r -> {
+				table.addRelation(r);
 			});
 			
 			return table ;
@@ -197,7 +215,24 @@ public class AnnotationReader implements DictionaryReader {
 			return createColumn(tagAnnotation.column(), tagAnnotation.isBlob(), tagAnnotation.isClob(), tagAnnotation.isJson(), tagAnnotation.isXml(), 
 					tagAnnotation.isHex(), tagAnnotation.isCompressed(), tagAnnotation.isEncrypted(), tagAnnotation.isKey(), tagAnnotation.isVersion(), tagAnnotation.isEnumAsString(), tag) ;
 		} else {
-			throw new DictionaryException("@BioSqlTag must be used together with @BioTag annotation in class " + obj.getBioClass()) ;
+			throw new DictionaryException("@BioSqlTag at " + f.getName() + " must be used together with @BioTag annotation in class " + obj.getBioClass()) ;
+		}
+	}
+	
+	protected BioRelation createRelation(Field f, BioObj obj) {
+		BioTag tag ; 
+		try {
+			tag = obj.getTag((String) f.get(null)) ;
+		} catch (IllegalAccessException e) {
+			throw new DictionaryException(e) ;
+		}
+		
+		if (tag != null) {
+			BioSqlRelationTag relationAnnotation = (BioSqlRelationTag) f.getAnnotation(BioSqlRelationTag.class) ;
+			
+			return createRelation(relationAnnotation.relateColumn(), relationAnnotation.toColumn(), relationAnnotation.relateColumns(), relationAnnotation.toColumns(), tag) ;
+		} else {
+			throw new DictionaryException("@BioSqlRelationTag must be used together with @BioTag annotation in class " + obj.getBioClass()) ;
 		}
 	}
 	
@@ -246,5 +281,18 @@ public class AnnotationReader implements DictionaryReader {
 			column.setSqlType(SqlUtility.getSqlType(tag.getType())) ;
 		
 		return column ;
+	}
+	
+	private BioRelation createRelation(String relateColumn, String toColumn, String[] relateColumns, String[] toColumns, BioTag tag) {
+		BioRelation relation = new BioRelation(tag) ;
+		if (relateColumn != null && relateColumn.length() > 0) {
+			relation.setRelateKeys(new String[] {relateColumn});
+			relation.setToKeys(new String[] {toColumn});
+		} else {
+			relation.setRelateKeys(relateColumns);
+			relation.setToKeys(toColumns);
+		}
+		
+		return relation ;
 	}
 }

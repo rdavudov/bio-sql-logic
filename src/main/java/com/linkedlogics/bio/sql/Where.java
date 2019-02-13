@@ -151,8 +151,20 @@ public class Where {
 	}
 
 	public Where merge(Where where) {
-		//TODO: to be implemented later
-		return this ;
+		if (where == null) {
+			return this ;
+		}
+		
+		Where merged = new Where(getWhere() + " and " + where.getWhere()) ;
+		merged.setTypeMap(new HashMap<Integer, Integer>(getTypeMap()));
+		merged.setValueMap(new HashMap<Integer, Object>(getValueMap()));
+		int size = merged.getTypeMap().size() ;
+		for (int i = 1; i <= where.getTypeMap().size(); i++) {
+			merged.getTypeMap().put(i + size, where.getTypeMap().get(i)) ;
+			merged.getValueMap().put(i + size, where.getValueMap().get(i)) ;
+		}
+		
+		return merged ;
 	}
 	
 	public String toString() {

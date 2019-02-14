@@ -385,14 +385,6 @@ public class BioSql<T extends BioObject> {
         } 
 	}
 	
-	public Object getValue(BioObject object, BioColumn column) {
-		Object value = column.getValue() ;
-		if (value instanceof BioExpression) {
-			value = ((BioExpression) value).getValue(object) ;
-		}
-		return value ;
-	}
-	
 	/**
 	 * Updates bio object using PKs and version (if table contains)
 	 * @param object
@@ -735,5 +727,20 @@ public class BioSql<T extends BioObject> {
 		} catch (Throwable e) {
 			throw new SqlException(e) ;
 		}
+	}
+	
+	/**
+	 * Each column has a value it is dynamic by default which gets a tag value from bio object
+	 * but it also can be a constant value or another expression not related to bio object for example systime
+	 * @param object
+	 * @param column
+	 * @return
+	 */
+	protected Object getValue(BioObject object, BioColumn column) {
+		Object value = column.getValue() ;
+		if (value instanceof BioExpression) {
+			value = ((BioExpression) value).getValue(object) ;
+		}
+		return value ;
 	}
 }

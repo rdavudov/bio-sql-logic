@@ -301,11 +301,7 @@ public class SqlUtility {
 				String xml = ((BioObject) value).toXml() ;
 				setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, xml);
 			} else if (column.isHex()) {
-				if (column.isCompressed()) {
-					setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, ByteUtility.bytesToHex(binaryParser.encode(value, true)));
-				} else {
-					setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, ByteUtility.bytesToHex(binaryParser.encode(value)));
-				}
+				setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, ByteUtility.bytesToHex(binaryParser.encode(value, column.isCompressed(), false, column.isEncrypted())));
 			} else if (column.isArray()) {
 				Object[] array = (Object[]) value;
 				

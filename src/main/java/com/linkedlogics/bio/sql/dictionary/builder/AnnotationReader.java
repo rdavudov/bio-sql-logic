@@ -309,7 +309,7 @@ public class AnnotationReader implements DictionaryReader {
 		column.setKey(isKey);
 		column.setVersion(isVersion);
 		column.setEnumAsString(isEnumAsString);
-		column.setExpression(new Dynamic(tag.getName()));
+		column.setValue(new Dynamic(tag.getName()));
 		if (columnName != null && columnName.trim().length() > 0) {
 			column.setColumn(columnName);
 		} else {

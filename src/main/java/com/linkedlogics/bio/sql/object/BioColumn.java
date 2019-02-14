@@ -12,7 +12,7 @@ public class BioColumn {
     private BioTag tag;
     private String column;
     private int sqlType;
-    private BioExpression expression ;
+    private Object value ;
     
     private boolean isKey;
     private boolean isVersion;
@@ -226,15 +226,15 @@ public class BioColumn {
 	 * Indicates to use bio expression result as a value
 	 * @return
 	 */
-	public BioExpression getExpression() {
-		return expression;
+	public Object getValue() {
+		return value;
 	}
 	/**
 	 * Sets bio expression
 	 * @param expression
 	 */
-	public void setExpression(BioExpression expression) {
-		this.expression = expression;
+	public void setValue(Object value) {
+		this.value = value;
 	}
 	/**
 	 * Indicates values are arrays

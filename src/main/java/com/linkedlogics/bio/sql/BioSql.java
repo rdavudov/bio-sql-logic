@@ -365,12 +365,7 @@ public class BioSql<T extends BioObject> {
 		try (PreparedStatement ps = connection.prepareStatement(table.getInsert())) {
             for (int i = 0; i < table.getColumns().length; i++) {
             	BioColumn column = table.getColumns()[i] ;
-            	Object value = object.get(column.getTag().getName()) ;
-            	if (value instanceof BioExpression) {
-                	value = ((BioExpression) value).getValue(object) ;
-                }
-            	
-            	SqlUtility.setParameters(ps, i + 1, value, column, binaryParser, xmlParser) ;
+            	SqlUtility.setParameters(ps, i + 1, getValue(object, column), column, binaryParser, xmlParser) ;
             }
             int result = ps.executeUpdate();
             
@@ -389,6 +384,15 @@ public class BioSql<T extends BioObject> {
             throw new SQLException(e);
         } 
 	}
+	
+	public Object getValue(BioObject object, BioColumn column) {
+		Object value = column.getValue() ;
+		if (value instanceof BioExpression) {
+			value = ((BioExpression) value).getValue(object) ;
+		}
+		return value ;
+	}
+	
 	/**
 	 * Updates bio object using PKs and version (if table contains)
 	 * @param object
@@ -411,12 +415,7 @@ public class BioSql<T extends BioObject> {
 		try (PreparedStatement ps = connection.prepareStatement(sql) ;) {
 			for (int i = 0; i < table.getColumns().length; i++) {
 				BioColumn column = table.getColumns()[i] ;
-				Object value = object.get(column.getTag().getName()) ;
-				if (value instanceof BioExpression) {
-                	value = ((BioExpression) value).getValue(object) ;
-                }
-				
-				SqlUtility.setParameters(ps, i + 1, value, column, binaryParser, xmlParser) ;
+				SqlUtility.setParameters(ps, i + 1, getValue(object, column), column, binaryParser, xmlParser) ;
 			}
 			SqlUtility.setWhereParameters(object, where, ps, table.getColumns().length) ;
 			int result = ps.executeUpdate();
@@ -458,12 +457,7 @@ public class BioSql<T extends BioObject> {
 				BioColumn column = table.getColumns()[i] ;
 				if (object.has(column.getTag().getName())) {
 					index++ ;
-					Object value = object.get(column.getTag().getName()) ;
-					if (value instanceof BioExpression) {
-						value = ((BioExpression) value).getValue(object) ;
-					}
-					
-					SqlUtility.setParameters(ps, index, value, column, binaryParser, xmlParser) ;
+					SqlUtility.setParameters(ps, index, getValue(object, column), column, binaryParser, xmlParser) ;
 				}
 			}
 			SqlUtility.setWhereParameters(object, where, ps, index) ;

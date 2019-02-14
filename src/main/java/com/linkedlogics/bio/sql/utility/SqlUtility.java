@@ -83,7 +83,7 @@ public class SqlUtility {
 		sql.append(table.getTable()) ;
 		sql.append(" set ");
 		sql.append(Arrays.stream(table.getColumns()).map(c -> {
-			if (object.has(c.getTag().getName()))
+			if (object.has(c.getTagName()))
 				return c.getColumn() + " = ?" ;
 			return null ;
 		}).filter(c -> {
@@ -132,7 +132,7 @@ public class SqlUtility {
 		HashMap<Integer, Integer> typeMap = new HashMap<Integer, Integer>() ;
 		AtomicInteger index = new AtomicInteger(1) ;
 		String where = Arrays.stream(table.getKeys()).map(c -> {
-			valueMap.put(index.get(), new Dynamic(c.getTag().getName())) ;
+			valueMap.put(index.get(), new Dynamic(c.getTagName())) ;
 			typeMap.put(index.get(), c.getSqlType()) ;
 			index.getAndIncrement() ;
 			return c.getColumn() + " = ?" ;
@@ -164,7 +164,7 @@ public class SqlUtility {
 		HashMap<Integer, Integer> typeMap = new HashMap<Integer, Integer>() ;
 		AtomicInteger index = new AtomicInteger(1) ;
 		String where = Arrays.stream(table.getKeys()).map(c -> {
-			valueMap.put(index.get(), new Dynamic(c.getTag().getName())) ;
+			valueMap.put(index.get(), new Dynamic(c.getTagName())) ;
 			typeMap.put(index.get(), c.getSqlType()) ;
 			index.getAndIncrement() ;
 			return c.getColumn() + " = ?" ;
@@ -172,9 +172,9 @@ public class SqlUtility {
 		
 		if (table.getVersionColumn() != null) {
 			where = where + (" and (") + table.getVersionColumn().getColumn() + " < ? or -1 = ?)" ;
-			valueMap.put(index.get(), new Dynamic(table.getVersionColumn().getTag().getName())) ;
+			valueMap.put(index.get(), new Dynamic(table.getVersionColumn().getTagName())) ;
 			typeMap.put(index.get(), table.getVersionColumn().getSqlType()) ;
-			valueMap.put(index.incrementAndGet() , new Dynamic(table.getVersionColumn().getTag().getName())) ;
+			valueMap.put(index.incrementAndGet() , new Dynamic(table.getVersionColumn().getTagName())) ;
 			typeMap.put(index.get(), table.getVersionColumn().getSqlType()) ;
 		}
 		

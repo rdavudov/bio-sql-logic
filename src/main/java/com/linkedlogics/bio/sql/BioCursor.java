@@ -56,7 +56,7 @@ public class BioCursor<T extends BioObject> implements Iterator<T> {
 				index = index + 1 ;
 				Object value = SqlUtility.getParameter(rs, index, sql.getTable().getColumns()[i], sql.getBinaryParser(), sql.getXmlParser()) ;
 				if (value != null) {
-					newObject.put(sql.getTable().getColumns()[i].getTag().getName(), value) ;
+					newObject.put(sql.getTable().getColumns()[i].getTagName(), value) ;
 				}
 			}
 			

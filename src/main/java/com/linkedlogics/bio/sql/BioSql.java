@@ -183,7 +183,7 @@ public class BioSql<T extends BioObject> {
 						index = index + 1;
 						Object value = SqlUtility.getParameter(rs, index, table.getColumns()[i], binaryParser, xmlParser);
 						if (value != null) {
-							object.put(table.getColumns()[i].getTag().getName(), value);
+							object.put(table.getColumns()[i].getTagName(), value);
 						}
 					}
 				}
@@ -250,7 +250,7 @@ public class BioSql<T extends BioObject> {
 						index = index + 1;
 						Object value = SqlUtility.getParameter(rs, index, table.getColumns()[i], binaryParser, xmlParser);
 						if (value != null) {
-							newObject.put(table.getColumns()[i].getTag().getName(), value);
+							newObject.put(table.getColumns()[i].getTagName(), value);
 						}
 					}
 					list.add(newObject);
@@ -447,7 +447,7 @@ public class BioSql<T extends BioObject> {
 			int index = 0 ;
 			for (int i = 0; i < table.getColumns().length; i++) {
 				BioColumn column = table.getColumns()[i] ;
-				if (object.has(column.getTag().getName())) {
+				if (object.has(column.getTagName())) {
 					index++ ;
 					SqlUtility.setParameters(ps, index, getValue(object, column), column, binaryParser, xmlParser) ;
 				}

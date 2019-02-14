@@ -55,6 +55,17 @@ public class BioColumn {
 	public void setTag(BioTag tag) {
 		this.tag = tag;
 	}
+	
+	/**
+	 * Returns tag to put into bio object
+	 * @return
+	 */
+	public String getTagName() {
+		if (tag != null) {
+			return tag.getName() ;
+		}
+		return column ;
+	}
 	/**
 	 * Returns column name
 	 * @return

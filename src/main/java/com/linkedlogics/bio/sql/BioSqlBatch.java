@@ -243,7 +243,7 @@ public class BioSqlBatch implements AutoCloseable {
 	private void setBatchParameters(BioObject object, PreparedStatement ps, Where where) throws SQLException {
 		for (int i = 0; i < bioSql.getTable().getColumns().length; i++) {
 			BioColumn column = bioSql.getTable().getColumns()[i] ;
-			Object value = object.get(column.getTag().getName()) ;
+			Object value = object.get(column.getTagName()) ;
 			if (value instanceof BioExpression) {
 				value = ((BioExpression) value).getValue(object) ;
 			}

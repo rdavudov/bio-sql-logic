@@ -149,7 +149,7 @@ public class SqlUtility {
 		BioTable table = BioSqlDictionary.getDictionary(relation.getTag().getObj().getDictionary()).getTableByCode(relation.getTag().getObj().getCode()) ;
 		
 		String where = IntStream.range(0, relation.getToKeys().length).mapToObj(i -> {
-			BioColumn column = table.getColumnByName(relation.getToKeys()[i]) ;
+			BioColumn column = table.getColumnByTag(relation.getToKeys()[i]) ;
 			valueMap.put(index.get(), new Dynamic(relation.getRelateKeys()[i])) ;
 			typeMap.put(index.get(), column.getSqlType()) ;
 			index.getAndIncrement() ;

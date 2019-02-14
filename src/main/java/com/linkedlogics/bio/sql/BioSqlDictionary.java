@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import com.linkedlogics.bio.exception.DictionaryException;
 import com.linkedlogics.bio.sql.object.BioTable;
+import com.linkedlogics.bio.sql.utility.DictionaryUtility;
 
 /**
  * Dictionary for storing table definitions
@@ -42,15 +43,15 @@ public class BioSqlDictionary {
 		this.code = code;
 	}
 	
-    HashMap<Integer, BioTable> getCodeMap() {
+	public HashMap<Integer, BioTable> getCodeMap() {
 		return codeMap;
 	}
 
-	HashMap<String, BioTable> getTypeMap() {
+	public HashMap<String, BioTable> getTypeMap() {
 		return typeMap;
 	}
 
-	HashMap<String, BioTable> getNameMap() {
+	public HashMap<String, BioTable> getNameMap() {
 		return nameMap;
 	}
 
@@ -149,4 +150,7 @@ public class BioSqlDictionary {
     	return dict ;
     }
    
+    public String toXml() {
+    	return DictionaryUtility.toXml(this) ;
+    }
 }

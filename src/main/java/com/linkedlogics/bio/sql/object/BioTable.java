@@ -20,6 +20,8 @@ public class BioTable {
 	private BioObj obj ;
 	private String schema ;
 	private String table ;
+	private int code ;
+	private int dictionary ;
 	
 	private BioColumn[] keys ;
 	private BioColumn versionColumn ;
@@ -38,21 +40,27 @@ public class BioTable {
 	private List<BioRelation> relations = new ArrayList<BioRelation>() ;
 	
 	public BioTable(int dictionary, int code) {
-		this(BioDictionary.getDictionary(dictionary).getObjByCode(code), null, null) ;
+		this(dictionary, code, null, null) ;
 	}
 	
 	public BioTable(int dictionary, int code, String table) {
-		this(BioDictionary.getDictionary(dictionary).getObjByCode(code), table, null) ;
+		this(dictionary, code, table, null) ;
 	}
 	
 	public BioTable(int dictionary, int code, String table, String schema) {
-		this(BioDictionary.getDictionary(dictionary).getObjByCode(code), table, schema) ;
+		this.dictionary = dictionary ;
+		this.code = code ;
+		this.schema = schema  ;
+		this.table = table ;
+		this.obj = BioDictionary.getDictionary(dictionary).getObjByCode(code) ;
 	}
 	
 	public BioTable(BioObj obj, String table, String schema) {
-		this.obj = obj ;
+		this.dictionary = obj.getDictionary() ;
+		this.code = obj.getCode() ;
 		this.schema = schema  ;
 		this.table = table ;
+		this.obj = obj ;
 	}
 	
 	public BioColumn[] getKeys() {
@@ -77,6 +85,14 @@ public class BioTable {
 	
 	public List<BioRelation> getRelations() {
 		return relations;
+	}
+	
+	public int getCode() {
+		return code;
+	}
+
+	public int getDictionary() {
+		return dictionary;
 	}
 
 	public void generate() {

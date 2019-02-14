@@ -115,7 +115,13 @@ public class DictionaryUtility {
 			xml.append(" is-enum-as-string=\"true\"") ;
 		}
 		
-		xml.append("/>\n") ;
+		if (column.getTag() == null) {
+			xml.append(">\n") ;
+			xml.append("\t\t\t<value type=\"Dynamic\">").append(column.getValue().toString()).append("</value>\n") ;
+			xml.append("\t\t</column>\n") ;
+		} else {
+			xml.append("/>\n") ;
+		}
     }
     /**
      * Exports relation to xml
@@ -127,8 +133,7 @@ public class DictionaryUtility {
     	xml.append(" type=\"").append(relation.getTag().getObj().getType()).append("\"") ;
     	
     	if (relation.getTag() != null) {
-			xml.append(" tag-code=\"").append(relation.getTag().getCode()).append("\"") ;
-			xml.append(" tag-name=\"").append(relation.getTag().getName()).append("\"") ;
+			xml.append(" tag=\"").append(relation.getTag().getCode()).append("\"") ;
 		}
     	
     	if (relation.getRelateKeys().length == 1) {

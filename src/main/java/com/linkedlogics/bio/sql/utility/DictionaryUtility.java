@@ -69,13 +69,18 @@ public class DictionaryUtility {
 	 */
     private static void columnToXml(BioColumn column, StringBuilder xml) {
     	xml.append("\t\t<column") ;
-    	xml.append(" name=\"").append(column.getColumn()).append("\"") ;
 		
-    	xml.append(" type=\"").append(getSqlType(column.getSqlType())).append("\"") ;
-    	
     	if (column.getTag() != null) {
-			xml.append(" tag=\"").append(column.getTag().getCode()).append("\"") ;
+    		if (!column.getColumn().equalsIgnoreCase(column.getTag().getName())) {
+    			xml.append(" name=\"").append(column.getColumn()).append("\"") ;
+    		}
+    		xml.append(" tag-name=\"").append(column.getTag().getName()).append("\"") ;
+			xml.append(" tag-code=\"").append(column.getTag().getCode()).append("\"") ;
+		} else {
+			xml.append(" name=\"").append(column.getColumn()).append("\"") ;
 		}
+    	
+    	xml.append(" type=\"").append(getSqlType(column.getSqlType())).append("\"") ;
 		
 		if (column.isArray()) {
 			xml.append(" is-array=\"true\"") ;
@@ -115,7 +120,13 @@ public class DictionaryUtility {
 			xml.append(" is-enum-as-string=\"true\"") ;
 		}
 		
-		xml.append("/>\n") ;
+		if (column.getTag() == null) {
+			xml.append(">\n") ;
+			xml.append("\t\t\t<value type=\"Dynamic\">").append(column.getValue().toString()).append("</value>\n") ;
+			xml.append("\t\t</column>\n") ;
+		} else {
+			xml.append("/>\n") ;
+		}
     }
     /**
      * Exports relation to xml
@@ -124,12 +135,12 @@ public class DictionaryUtility {
      */
     private static void relationToXml(BioRelation relation, StringBuilder xml) {
     	xml.append("\t\t<relation") ;
-    	xml.append(" type=\"").append(relation.getTag().getObj().getType()).append("\"") ;
     	
     	if (relation.getTag() != null) {
+    		xml.append(" tag-name=\"").append(relation.getTag().getName()).append("\"") ;
 			xml.append(" tag-code=\"").append(relation.getTag().getCode()).append("\"") ;
-			xml.append(" tag-name=\"").append(relation.getTag().getName()).append("\"") ;
 		}
+    	xml.append(" type=\"").append(relation.getTag().getObj().getType()).append("\"") ;
     	
     	if (relation.getRelateKeys().length == 1) {
     		xml.append(" relate-key=\"") ;
@@ -174,5 +185,23 @@ public class DictionaryUtility {
 			}
 		}
 		return "UNKNOWN" ;
+    }
+    
+    public static int getSqlType(String sqlType) {
+    	Class c = Types.class;
+		Field[] fields = c.getDeclaredFields() ;
+		for (int i = 0; i < fields.length; i++) {
+			if (fields[i].getType() == int.class) {
+				try {
+					int type = fields[i].getInt(null) ;
+					if (fields[i].getName().equals(sqlType)) {
+						return fields[i].getInt(null) ;
+					}
+				} catch (Throwable e) {
+
+				}
+			}
+		}
+		return -1 ;
     }
 }

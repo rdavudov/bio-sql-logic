@@ -22,8 +22,9 @@ public class BioDictionaryBuilder extends com.linkedlogics.bio.BioDictionaryBuil
 	
 	@Override
 	public com.linkedlogics.bio.BioDictionaryBuilder addPackage(String packageName) {
-		readers.add(new AnnotationReader()) ;
-		return super.addPackage(packageName);
+		readers.add(new AnnotationReader(packageName)) ;
+		super.addPackage(packageName);
+		return this ;
 	}
 	
 	/**

@@ -53,6 +53,9 @@ public class BioTable {
 		this.schema = schema  ;
 		this.table = table ;
 		this.obj = BioDictionary.getDictionary(dictionary).getObjByCode(code) ;
+		if (this.table == null) {
+			this.table = this.obj.getName() ;
+		}
 	}
 	
 	public BioTable(BioObj obj, String table, String schema) {
@@ -61,6 +64,9 @@ public class BioTable {
 		this.schema = schema  ;
 		this.table = table ;
 		this.obj = obj ;
+		if (this.table == null) {
+			this.table = this.obj.getName() ;
+		}
 	}
 	
 	public BioColumn[] getKeys() {
@@ -76,7 +82,12 @@ public class BioTable {
 	}
 	
 	public void addColumn(BioColumn column) {
-		this.columnByTagMap.put(column.getTag().getName(), column) ;
+		// sometimes it can be custom column besides tag
+		// in this case tag will be null
+		if (column.getTag() != null) 
+			this.columnByTagMap.put(column.getTag().getName(), column) ;
+		else 
+			this.columnByTagMap.put(column.getColumn(), column) ;
 	}
 	
 	public void addRelation(BioRelation relation) {

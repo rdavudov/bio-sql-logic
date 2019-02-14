@@ -29,8 +29,9 @@ public class BioColumn {
     private boolean isList ;
     private boolean isMandatory ;
 	
-    public BioColumn() {
-    	
+    public BioColumn(String name, int sqlType) {
+    	this.column = name ;
+    	this.sqlType = sqlType ;
     }
     
     public BioColumn(BioTag tag) {

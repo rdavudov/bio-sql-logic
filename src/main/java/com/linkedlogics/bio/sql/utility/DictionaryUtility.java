@@ -2,14 +2,18 @@ package com.linkedlogics.bio.sql.utility;
 
 import java.lang.reflect.Field;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import com.linkedlogics.bio.sql.BioSqlDictionary;
 import com.linkedlogics.bio.sql.object.BioColumn;
 import com.linkedlogics.bio.sql.object.BioRelation;
 import com.linkedlogics.bio.sql.object.BioTable;
+import com.linkedlogics.bio.utility.StringUtility;
 
 /**
  * Bio sql dictionary XML utilities
@@ -27,11 +31,19 @@ public class DictionaryUtility {
 		xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n") ;
 		xml.append("<sql-dictionary code=\"").append(dictionary.getCode()).append("\">\n") ;
 		
-		dictionary.getCodeMap().entrySet().stream().map(e -> {
-			return e.getValue() ;
-		}).sorted(Comparator.comparing(BioTable::getCode)).collect(Collectors.toList()).forEach(o -> {
-			tableToXml(o, xml);
+		ArrayList<BioTable> list = new ArrayList<BioTable>() ;
+		for(Entry<Integer, BioTable> e : dictionary.getCodeMap().entrySet()) {
+			list.add(e.getValue()) ;
+		}
+		Collections.sort(list, new Comparator<BioTable>() {
+			@Override
+			public int compare(BioTable o1, BioTable o2) {
+				return o1.getCode() - o2.getCode();
+			}
 		});
+		for (BioTable t : list) {
+			tableToXml(t, xml);
+		}
 		
 		xml.append("</sql-dictionary>") ;
 		return xml.toString() ;
@@ -52,13 +64,23 @@ public class DictionaryUtility {
 		}
 		xml.append(">\n") ;
 		
-		Arrays.stream(table.getColumns()).sorted(Comparator.comparing(BioColumn::getColumn)).forEach(c -> {
+		ArrayList<BioColumn> columnList = new ArrayList<BioColumn>() ;
+		for (int i = 0; i < table.getColumns().length; i++) {
+			columnList.add(table.getColumns()[i]) ;
+		}
+		Collections.sort(columnList, new Comparator<BioColumn>() {
+			@Override
+			public int compare(BioColumn o1, BioColumn o2) {
+				return o1.getColumn().compareTo(o2.getColumn());
+			}
+		});
+		for (BioColumn c : columnList) {
 			columnToXml(c, xml);
-		});
+		}
 		
-		table.getRelations().forEach(r -> {
+		for (BioRelation r : table.getRelations()) {
 			relationToXml(r, xml);
-		});
+		}
 		
 		xml.append("\t</table>\n") ;
 	}
@@ -148,7 +170,7 @@ public class DictionaryUtility {
     		xml.append("\"") ;
     	} else {
     		xml.append(" relate-keys=\"") ;
-    		xml.append(Arrays.stream(relation.getRelateKeys()).collect(Collectors.joining(","))) ;
+    		xml.append(StringUtility.join(relation.getRelateKeys())) ;
     		xml.append("\"") ;
     	}
     	
@@ -158,7 +180,7 @@ public class DictionaryUtility {
     		xml.append("\"") ;
     	} else {
     		xml.append(" to-keys=\"") ;
-    		xml.append(Arrays.stream(relation.getToKeys()).collect(Collectors.joining(","))) ;
+    		xml.append(StringUtility.join(relation.getToKeys())) ;
     		xml.append("\"") ;
     	}
 		

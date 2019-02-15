@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import com.linkedlogics.bio.BioDictionary;
@@ -107,19 +108,23 @@ public class BioTable {
 	}
 
 	public void generate() {
-		this.columnByTagMap.entrySet().stream().forEach(e -> {
+		this.columns = new BioColumn[this.columnByTagMap.size()] ;
+		int index = 0 ;
+		ArrayList<BioColumn> keyList = new ArrayList<BioColumn>() ;
+		for (Entry<String, BioColumn> e : this.columnByTagMap.entrySet()) {
 			this.columnByNameMap.put(e.getValue().getColumn(), e.getValue()) ;
-		});
-		this.columns = this.columnByTagMap.entrySet().stream().map(e -> {
-			return e.getValue() ;
-		}).toArray(size -> new BioColumn[size]) ;
+			this.columns[index] = e.getValue() ;
+			if (e.getValue().isKey()) {
+				keyList.add(e.getValue()) ;
+			}
+			if (e.getValue().isVersion()) {
+				this.versionColumn = e.getValue() ;
+			}
+			index++ ;
+		}
 		
-		this.keys = (BioColumn[]) Arrays.stream(columns).filter(c -> {
-			return c.isKey() ;
-		}).toArray(size -> new BioColumn[size]) ;
-		this.versionColumn = (BioColumn) Arrays.stream(columns).filter(c -> {
-			return c.isVersion() ;
-		}).findFirst().orElse(null) ;
+		this.keys = new BioColumn[keyList.size()] ;
+		keyList.toArray(this.keys) ;
 		
 		this.insert = SqlUtility.generateInsert(this) ;
 		this.update = SqlUtility.generateUpdate(this) ;
@@ -131,10 +136,13 @@ public class BioTable {
 	}
 	
 	public void generateRelations() {
-		this.relations = this.relationByTagMap.values().stream().collect(Collectors.toList()) ;
-		this.relations.forEach(r -> {
+		for (Entry<String, BioRelation> r : this.relationByTagMap.entrySet()) {
+			this.relations.add(r.getValue()) ;
+		}
+		
+		for (BioRelation r : this.relations) {
 			r.setWhere(SqlUtility.generateWhereRelation(r));
-		});
+		}
 	}
 	
 	public BioColumn getColumnByTag(String tag) {

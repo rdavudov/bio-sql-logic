@@ -5,12 +5,13 @@ import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import com.linkedlogics.bio.dictionary.builder.DictionaryReader;
 import com.linkedlogics.bio.exception.DictionaryException;
 import com.linkedlogics.bio.sql.dictionary.builder.AnnotationReader;
 import com.linkedlogics.bio.sql.dictionary.builder.XmlReader;
-import com.linkedlogics.bio.sql.utility.SqlUtility;
+import com.linkedlogics.bio.sql.object.BioTable;
 
 /**
  * Dictionary builder for sql tables
@@ -21,7 +22,7 @@ public class BioDictionaryBuilder extends com.linkedlogics.bio.BioDictionaryBuil
 	protected List<DictionaryReader> readers = new ArrayList<DictionaryReader>();
 	
 	@Override
-	public com.linkedlogics.bio.BioDictionaryBuilder addPackage(String packageName) {
+	public BioDictionaryBuilder addPackage(String packageName) {
 		readers.add(new AnnotationReader(packageName)) ;
 		super.addPackage(packageName);
 		return this ;
@@ -78,18 +79,17 @@ public class BioDictionaryBuilder extends com.linkedlogics.bio.BioDictionaryBuil
 			reader.read(this); 
 		}
 		
-		// generate all sql statements for each table
-		BioSqlDictionary.getDictionaryMap().entrySet().stream().forEach(e -> {
-			e.getValue().getCodeMap().entrySet().stream().forEach(t -> {
+		
+		for (Entry<Integer, BioSqlDictionary> e : BioSqlDictionary.getDictionaryMap().entrySet()) {
+			for (Entry<Integer, BioTable> t : e.getValue().getCodeMap().entrySet()) {
 				t.getValue().generate(); 
-			});
-		});
+			}
+		}
 		
-		BioSqlDictionary.getDictionaryMap().entrySet().stream().forEach(e -> {
-			e.getValue().getCodeMap().entrySet().stream().forEach(t -> {
+		for (Entry<Integer, BioSqlDictionary> e : BioSqlDictionary.getDictionaryMap().entrySet()) {
+			for (Entry<Integer, BioTable> t : e.getValue().getCodeMap().entrySet()) {
 				t.getValue().generateRelations(); 
-			});
-		});
-		
+			}
+		}
 	}
 }

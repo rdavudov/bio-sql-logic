@@ -28,10 +28,7 @@ public class Order {
 		StringBuilder order = new StringBuilder() ;
 		String delimiter = "" ;
 		for (int i = 0; i < tagList.size(); i++) {
-			BioColumn column = null ;
-			if (table != null) {
-				column = table.getColumnByTag(tagList.get(i)) ;
-			}
+			BioColumn column = table.getColumnByTag(tagList.get(i)) ;
 			
 			order.append(delimiter) ;
 			if (column != null) {

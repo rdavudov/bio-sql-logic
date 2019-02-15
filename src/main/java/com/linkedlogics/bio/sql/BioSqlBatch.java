@@ -76,6 +76,12 @@ public class BioSqlBatch implements AutoCloseable {
 		updateWhere = bioSql.getTable().getWhereWithVersion() ;
 		deleteWhere = bioSql.getTable().getWhere() ;
 	}
+	
+	public BioSqlBatch(Class bioClass) {
+		bioSql = new BioSql<BioObject>(bioClass) ;
+		updateWhere = bioSql.getTable().getWhereWithVersion() ;
+		deleteWhere = bioSql.getTable().getWhere() ;
+	}
 	/**
 	 * Sets database connection
 	 * @param connection
@@ -232,6 +238,7 @@ public class BioSqlBatch implements AutoCloseable {
 		execute(bioSql.getTable().getInsert(), insert, null); 
 		execute(bioSql.getTable().getUpdate(), update, updateWhere); 
 		execute(bioSql.getTable().getDelete(), delete, deleteWhere); 
+		bioSql.getConnection().commit();
 	}
 	/**
 	 * Sets batch parameters

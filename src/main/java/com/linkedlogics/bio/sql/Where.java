@@ -2,6 +2,7 @@ package com.linkedlogics.bio.sql;
 
 import java.sql.Types;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -46,7 +47,9 @@ public class Where {
     	valueMap = new HashMap<Integer, Object>() ;
     	typeMap = new HashMap<Integer, Integer>() ;
     	AtomicInteger index = new AtomicInteger(1) ;
-    	this.where = object.stream().map(e -> {
+    	StringBuilder w = new StringBuilder() ;
+    	String and = " and " ;
+    	for (Entry<String, Object> e : object.entries()) {
     		BioColumn column = table.getColumnByTag(e.getKey()) ;
     		if (column != null) {
     			Object value = e.getValue() ;
@@ -56,12 +59,10 @@ public class Where {
                  typeMap.put(index.get(), SqlUtility.getSqlType(e.getValue())) ;
     			 valueMap.put(index.get(), value) ;
                  index.incrementAndGet();
-                 return column.getColumn() + " = ? " ;
+                 w.append(and).append(column.getColumn()).append(" = ? ") ;
     		}
-    		return null ;
-    	}).filter(c -> {
-    		return c != null ;
-    	}).collect(Collectors.joining(" and "));
+		}
+    	this.where = w.toString().substring(and.length()) ;
 	}
 	
 	public Where setInt(int index, Object value) {

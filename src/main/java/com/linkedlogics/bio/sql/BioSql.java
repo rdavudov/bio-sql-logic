@@ -5,16 +5,18 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.linkedlogics.bio.BioDictionary;
 import com.linkedlogics.bio.BioExpression;
 import com.linkedlogics.bio.BioObject;
+import com.linkedlogics.bio.dictionary.BioObj;
 import com.linkedlogics.bio.parser.BioObjectBinaryParser;
 import com.linkedlogics.bio.parser.BioObjectXmlParser;
 import com.linkedlogics.bio.sql.exception.SqlException;
 import com.linkedlogics.bio.sql.object.BioColumn;
+import com.linkedlogics.bio.sql.object.BioRelation;
 import com.linkedlogics.bio.sql.object.BioTable;
 import com.linkedlogics.bio.sql.utility.SqlUtility;
 
@@ -65,6 +67,14 @@ public class BioSql<T extends BioObject> {
 	 */
 	public BioSql(int dictionary, int code) {
 		this.table = BioSqlDictionary.getDictionary(dictionary).getTableByCode(code) ;
+		this.binaryParser = new BioObjectBinaryParser() ;
+		this.xmlParser = new BioObjectXmlParser() ;
+		this.isLazy = true ;
+	}
+	
+	public BioSql(Class bioClass) {
+		BioObj obj = BioDictionary.findObj(bioClass) ;
+		this.table = BioSqlDictionary.getDictionary(obj.getDictionary()).getTableByCode(obj.getCode()) ;
 		this.binaryParser = new BioObjectBinaryParser() ;
 		this.xmlParser = new BioObjectXmlParser() ;
 		this.isLazy = true ;
@@ -262,13 +272,13 @@ public class BioSql<T extends BioObject> {
 		
 		// if it is NOT lazy then we try to load related bio objects also
 		if (list.size() > 0 && !isLazy && table.getRelations().size() > 0) {
-			list.stream().forEach(o -> {
+			for (int i = 0; i < list.size(); i++) {
 				try {
-					selectRelations(o);
+					selectRelations(list.get(i));
 				} catch (SQLException e) {
 					throw new SqlException(e) ;
 				}
-			});
+			}
 		}
 		
 		return list ;
@@ -516,7 +526,8 @@ public class BioSql<T extends BioObject> {
 	 * @throws SQLException
 	 */
 	void selectRelations(T object) throws SQLException {
-		table.getRelations().stream().forEach(r -> {
+		for (int i = 0; i < table.getRelations().size(); i++) {
+			BioRelation r = table.getRelations().get(i) ;
 			BioSql sql = new BioSql(r.getTag().getObj().getCode()) ;
 			sql.setConnection(connection);
 			sql.setLazy(isLazy);
@@ -540,7 +551,7 @@ public class BioSql<T extends BioObject> {
 			} catch (SQLException e) {
 				throw new SqlException(e) ;
 			}
-		});
+		}
 	}
 	
 	/**
@@ -549,7 +560,8 @@ public class BioSql<T extends BioObject> {
 	 * @throws SQLException
 	 */
 	void insertRelations(T object) throws SQLException {
-		table.getRelations().stream().forEach(r -> {
+		for (int i = 0; i < table.getRelations().size(); i++) {
+			BioRelation r = table.getRelations().get(i) ;
 			BioSql sql = new BioSql(r.getTag().getObj().getCode()) ;
 			sql.setConnection(connection);
 			sql.setLazy(isLazy);
@@ -559,8 +571,8 @@ public class BioSql<T extends BioObject> {
 					if (r.isMany()) {
 						if (r.getTag().isArray()) {
 							BioObject[] array = (BioObject[]) object.get(r.getTag().getName()) ;
-							for (int i = 0; i < array.length; i++) {
-								sql.insert(array[i]) ;
+							for (int j = 0; j < array.length; j++) {
+								sql.insert(array[j]) ;
 							}
 						} else {
 							List<BioObject> list = (List<BioObject>) object.get(r.getTag().getName()) ;
@@ -575,7 +587,7 @@ public class BioSql<T extends BioObject> {
 			} catch (SQLException e) {
 				throw new SqlException(e) ;
 			}
-		});
+		}
 	}
 	/**
 	 * Updates related bio objects
@@ -583,7 +595,8 @@ public class BioSql<T extends BioObject> {
 	 * @throws SQLException
 	 */
 	void updateRelations(T object) throws SQLException {
-		table.getRelations().stream().forEach(r -> {
+		for (int i = 0; i < table.getRelations().size(); i++) {
+			BioRelation r = table.getRelations().get(i) ;
 			BioSql sql = new BioSql(r.getTag().getObj().getCode()) ;
 			sql.setConnection(connection);
 			sql.setLazy(isLazy);
@@ -595,8 +608,8 @@ public class BioSql<T extends BioObject> {
 					if (r.isMany()) {
 						if (r.getTag().isArray()) {
 							BioObject[] array = (BioObject[]) object.get(r.getTag().getName()) ;
-							for (int i = 0; i < array.length; i++) {
-								sql.insert(array[i]) ;
+							for (int j = 0; j < array.length; j++) {
+								sql.insert(array[j]) ;
 							}
 						} else {
 							List<BioObject> list = (List<BioObject>) object.get(r.getTag().getName()) ;
@@ -611,7 +624,7 @@ public class BioSql<T extends BioObject> {
 			} catch (SQLException e) {
 				throw new SqlException(e) ;
 			}
-		});
+		}
 	}
 	
 	/**
@@ -620,7 +633,8 @@ public class BioSql<T extends BioObject> {
 	 * @throws SQLException
 	 */
 	void mergeRelations(T object) throws SQLException {
-		table.getRelations().stream().forEach(r -> {
+		for (int i = 0; i < table.getRelations().size(); i++) {
+			BioRelation r = table.getRelations().get(i) ;
 			BioSql sql = new BioSql(r.getTag().getObj().getCode()) ;
 			sql.setConnection(connection);
 			sql.setLazy(isLazy);
@@ -631,11 +645,11 @@ public class BioSql<T extends BioObject> {
 						// if it is a collection we only add new ones, and merge old ones we don't remove any of them
 						if (r.getTag().isArray()) {
 							BioObject[] array = (BioObject[]) object.get(r.getTag().getName()) ;
-							for (int i = 0; i < array.length; i++) {
-								if (sql.count(array[i]) == 0) {
-									sql.insert(array[i]) ;
+							for (int j = 0; j < array.length; j++) {
+								if (sql.count(array[j]) == 0) {
+									sql.insert(array[j]) ;
 								} else {
-									sql.merge(array[i]) ;
+									sql.merge(array[j]) ;
 								}
 							}
 						} else {
@@ -660,7 +674,7 @@ public class BioSql<T extends BioObject> {
 			} catch (SQLException e) {
 				throw new SqlException(e) ;
 			}
-		});
+		}
 	}
 	/**
 	 * Deletes related bio objects
@@ -668,7 +682,8 @@ public class BioSql<T extends BioObject> {
 	 * @throws SQLException
 	 */
 	public void deleteRelations(T object) throws SQLException {
-		table.getRelations().stream().forEach(r -> {
+		for (int i = 0; i < table.getRelations().size(); i++) {
+			BioRelation r = table.getRelations().get(i) ;
 			BioSql sql = new BioSql(r.getTag().getObj().getCode()) ;
 			sql.setConnection(connection);
 			sql.setLazy(isLazy);
@@ -678,7 +693,7 @@ public class BioSql<T extends BioObject> {
 			} catch (SQLException e) {
 				throw new SqlException(e) ;
 			}
-		});
+		}
 	}
 
 	/**

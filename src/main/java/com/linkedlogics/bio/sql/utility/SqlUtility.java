@@ -39,6 +39,7 @@ import com.linkedlogics.bio.sql.object.BioRelation;
 import com.linkedlogics.bio.sql.object.BioTable;
 import com.linkedlogics.bio.utility.ByteUtility;
 import com.linkedlogics.bio.utility.ConversionUtility;
+import com.linkedlogics.bio.utility.StringUtility;
 
 
 public class SqlUtility {
@@ -49,6 +50,7 @@ public class SqlUtility {
 		}
 		sql.append(table.getTable()) ;
 		sql.append(" (");
+//		sql.append(StringUtility.join(list))
 		sql.append(Arrays.stream(table.getColumns()).map(c -> {
 			return c.getColumn() ;
 		}).collect(Collectors.joining(",")));

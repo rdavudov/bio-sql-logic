@@ -2,8 +2,8 @@ package com.linkedlogics.bio.sql.dictionary.builder;
 
 import java.lang.reflect.Field;
 import java.sql.Types;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import com.linkedlogics.bio.BioDictionary;
 import com.linkedlogics.bio.BioDictionaryBuilder;
@@ -28,7 +28,6 @@ import com.linkedlogics.bio.sql.object.BioColumn;
 import com.linkedlogics.bio.sql.object.BioRelation;
 import com.linkedlogics.bio.sql.object.BioTable;
 import com.linkedlogics.bio.sql.utility.SqlUtility;
-import com.linkedlogics.bio.utility.POJOUtility;
 
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
@@ -171,22 +170,10 @@ public class AnnotationReader implements DictionaryReader {
 					&& bioClass.getAnnotation(BioPojo.class) == null) {
 				throw new DictionaryException("@BioSql must be used together with @BioObj or @BioPojo in class" + tableClassName) ;
 			}
-			int code = 0 ;
-			int dictionary = 0 ;
-			if (bioClass.getAnnotation(com.linkedlogics.bio.annotation.BioObj.class) != null) {
-				code = ((com.linkedlogics.bio.annotation.BioObj) bioClass.getAnnotation(com.linkedlogics.bio.annotation.BioObj.class)).code() ;
-				dictionary = ((com.linkedlogics.bio.annotation.BioObj) bioClass.getAnnotation(com.linkedlogics.bio.annotation.BioObj.class)).dictionary() ;
-			} else {
-				code = ((BioPojo) bioClass.getAnnotation(BioPojo.class)).code() ;
-				dictionary = ((BioPojo) bioClass.getAnnotation(BioPojo.class)).dictionary() ;
-				if (code == 0) {
-					code = POJOUtility.getCode(tableClassName) ;
-				}
-			}
 			
-			BioObj obj = BioDictionary.getDictionary(dictionary).getObjByCode(code) ;
+			BioObj obj = BioDictionary.findObj(bioClass) ;
 			if (obj == null) {
-				throw new DictionaryException(code + " bio obj is not found in dictionary") ;
+				throw new DictionaryException(bioClass + " bio obj is not found in dictionary") ;
 			}
 			
 			BioSql sqlAnnotation = (BioSql) bioClass.getAnnotation(BioSql.class) ;
@@ -204,38 +191,36 @@ public class AnnotationReader implements DictionaryReader {
 			HashMap<String, BioRelation> relationMap = new HashMap<String, BioRelation>();
 			
 			while (bioClass != BioObject.class) {
-				Arrays.stream(bioClass.getDeclaredFields()).filter(f -> {
-					return f.isAnnotationPresent(BioSqlTag.class) ;
-				}).forEach(f -> {
-					try {
-						BioColumn column = createColumn(f, obj) ;
-						columnMap.putIfAbsent(column.getTag().getName(), column) ;
-					} catch (Throwable e) {
-						throw new DictionaryException(e) ;
-					}
-				}) ;
 				
-				Arrays.stream(bioClass.getDeclaredFields()).filter(f -> {
-					return f.isAnnotationPresent(BioSqlRelationTag.class) ;
-				}).forEach(f -> {
-					try {
-						BioRelation relation = createRelation(f, obj) ;
-						relationMap.putIfAbsent(relation.getTag().getName(), relation) ;
-					} catch (Throwable e) {
-						throw new DictionaryException(e) ;
+				Field[] fields = bioClass.getDeclaredFields();
+				for (int i = 0; i < fields.length; i++) {
+					if (fields[i].isAnnotationPresent(BioSqlTag.class)) {
+						try {
+							BioColumn column = createColumn(fields[i], obj) ;
+							columnMap.putIfAbsent(column.getTag().getName(), column) ;
+						} catch (Throwable e) {
+							throw new DictionaryException(e) ;
+						}
+					} else if (fields[i].isAnnotationPresent(BioSqlRelationTag.class)) {
+						try {
+							BioRelation relation = createRelation(fields[i], obj) ;
+							relationMap.putIfAbsent(relation.getTag().getName(), relation) ;
+						} catch (Throwable e) {
+							throw new DictionaryException(e) ;
+						}
 					}
-				}) ;
+				}
 				
 				bioClass = bioClass.getSuperclass();
 			}
 			
-			columnMap.values().stream().forEach(c -> {
-				table.addColumn(c);
-			});
+			for (Entry<String, BioColumn> e : columnMap.entrySet()) {
+				table.addColumn(e.getValue());
+			}
 			
-			relationMap.values().stream().forEach(r -> {
-				table.addRelation(r);
-			});
+			for (Entry<String, BioRelation> e : relationMap.entrySet()) {
+				table.addRelation(e.getValue());
+			}
 			
 			return table ;
 		} catch (Throwable e) {

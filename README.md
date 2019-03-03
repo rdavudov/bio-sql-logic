@@ -9,7 +9,7 @@ Bio Sql is an SQL wrapper for Bio Objects where basic CRUD operations are suppor
 - Definition of relations of One-to-One and One-To-Many
 - Enums can be stored as numbers or strings
 
-Bio Sql requires to add two more annotations and that' all. 
+Bio Sql requires to add two more annotations and that's all. 
 - ```@BioSql``` indicates that Bio Object can be persisted to database similar to ```@Entity``` annotation in JPA
 - ```@BioSqlTag``` indicates that this field must be persisted to database similar to ```@Column``` annotation in JPA
 
@@ -75,7 +75,7 @@ public class Vehicle extends BioObject {
   public static final String FUEL_EFFICIENCY = "fuel_efficiency" ;
 }
 ```
-There bunch of other properties inside ```@BioSqlTag```
+There are a bunch of other properties inside ```@BioSqlTag```
 - ```isKey```               indicates PK
 - ```isVersion```           indicates Version tag and it will be considered during updates/merges
 - ```isBlob```          indicates data should be stored as BLOB

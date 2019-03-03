@@ -20,19 +20,19 @@ Here is an example:
 @BioSql
 public class Vehicle extends BioObject {
   @BioTag(type="String")
-  @BioSql(isKey=true)
+  @BioSqlTag(isKey=true)
   public static final String VIN = "vin" ;
   @BioTag(type="Integer")
-  @BioSql
+  @BioSqlTag
   public static final String YEAR_OF_PRODUCTION = "year_of_production" ;
   @BioTag(type="String")
-  @BioSql
+  @BioSqlTag
   public static final String PRODUCER = "producer" ;
   @BioTag(type="Integer")
-  @BioSql
+  @BioSqlTag
   public static final String ENGINE = "engine" ;
   @BioTag(type="Integer")
-  @BioSql
+  @BioSqlTag
   public static final String CYLINDERS = "cylinders" ;
   @BioTag(type="Double")
   public static final String FUEL_EFFICIENCY = "fuel_efficiency" ;
@@ -57,19 +57,19 @@ By default snake case of class and fields will be used as table name and columns
 @BioSql(schema="test", table="vehicles")
 public class Vehicle extends BioObject {
   @BioTag(type="String")
-  @BioSql(isKey=true, column="vin_id")
+  @BioSqlTag(isKey=true, column="vin_id")
   public static final String VIN = "vin" ;
   @BioTag(type="Integer")
-  @BioSql
+  @BioSqlTag
   public static final String YEAR_OF_PRODUCTION = "year_of_production" ;
   @BioTag(type="String")
-  @BioSql
+  @BioSqlTag
   public static final String PRODUCER = "producer" ;
   @BioTag(type="Integer")
-  @BioSql
+  @BioSqlTag
   public static final String ENGINE = "engine" ;
   @BioTag(type="Integer")
-  @BioSql
+  @BioSqlTag
   public static final String CYLINDERS = "cylinders" ;
   @BioTag(type="Double")
   public static final String FUEL_EFFICIENCY = "fuel_efficiency" ;

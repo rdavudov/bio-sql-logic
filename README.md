@@ -111,6 +111,7 @@ v.set("undefined tag", "Hello world") ;
 int result = sql.insert(v) ;
 ```
 if ```result > 0``` it means that object is inserted. It will throw SQLException if something bad happens.
+Only values of tags having ```@BioSqlTag``` annotation will be inserted rest will be ignored.
 
 ## Selecting Bio Objects
 There are two ways of selecting. One is with single primary key, and another one with multiple keys or any condition.
@@ -127,6 +128,66 @@ List<Vehicle> list = sql.select(new Vehicle() {{
 In order to select based on condition you have to use ```Where``` class as following:
 ```java
 List<Vehicle> list = sql.select(null, new Where("year_of_production > ?") {{
+    setInt(1, 2015) ;
+}});
+```
+
+## Updating Bio Objects
+You have to provide Bio Object with PK value inside as following:
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.VIN, "hs2123122h212") ;
+v.set(Vehicle.FUEL_EFFICIENCY, 19.2) ;
+
+int result = sql.update(v) ;
+```
+if ```result > 0``` it means that object is updated. It will throw SQLException if something bad happens.
+**Note that** ```update()``` will set to NULL if any tag is missing inside Bio Object. If you want to update only some of the fields then you have to use ```merge()```
+
+In order to update based on condition you have to use ```Where``` class as following:
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.FUEL_EFFICIENCY, 19.2) ;
+
+List<Vehicle> list = sql.update(v, new Where("year_of_production > ?") {{
+    setInt(1, 2015) ;
+}});
+```
+
+## Merging Bio Objects
+Merging only updates existing values inside Bio Object, remaning columns will be untouched.
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.VIN, "hs2123122h212") ;
+v.set(Vehicle.FUEL_EFFICIENCY, 19.2) ;
+
+int result = sql.merge(v) ;
+```
+if ```result > 0``` it means that object is updated. It will throw SQLException if something bad happens.
+
+In order to merge based on condition you have to use ```Where``` class as following:
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.FUEL_EFFICIENCY, 19.2) ;
+
+List<Vehicle> list = sql.merge(v, new Where("year_of_production > ?") {{
+    setInt(1, 2015) ;
+}});
+```
+
+## Deleting Bio Objects
+You have to provide Bio Object only with PK value inside as following:
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.VIN, "hs2123122h212") ;
+
+int result = sql.delete(v) ;
+```
+if ```result > 0``` it means that object is updated. It will throw SQLException if something bad happens.
+
+In order to delete based on condition you have to use ```Where``` class as following:
+```java
+List<Vehicle> list = sql.merge(null, new Where("year_of_production > ?") {{
     setInt(1, 2015) ;
 }});
 ```

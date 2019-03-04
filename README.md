@@ -187,7 +187,7 @@ if ```result > 0``` it means that object is updated. It will throw SQLException 
 
 In order to delete based on condition you have to use ```Where``` class as following:
 ```java
-List<Vehicle> list = sql.merge(null, new Where("year_of_production > ?") {{
+List<Vehicle> list = sql.delete(null, new Where("year_of_production > ?") {{
     setInt(1, 2015) ;
 }});
 ```

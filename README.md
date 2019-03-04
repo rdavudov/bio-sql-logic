@@ -1,4 +1,4 @@
-# Bio Sql
+# Bio SQL
 Bio Sql is an SQL wrapper for Bio Objects where basic CRUD operations are supported. You only need to add ```@BioSql``` and ```@BioSqlTag``` annotations to your objects and tags. 
 
 ## Features

@@ -191,3 +191,50 @@ List<Vehicle> list = sql.delete(null, new Where("year_of_production > ?") {{
     setInt(1, 2015) ;
 }});
 ```
+
+## Bio SQL Versioned Update and Merge
+If you are using ```isVersion``` property then it means that any update/merge will be checked for version first. Here it is how it works.
+First we need to specify which tag/column is holding object's version.
+```java
+@BioObj
+@BioSql(schema="test", table="vehicles")
+public class Vehicle extends BioObject {
+  @BioTag(type="String")
+  @BioSqlTag(isKey=true, column="vin_id")
+  public static final String VIN = "vin" ;
+  @BioTag(type="Integer")
+  @BioSqlTag
+  public static final String YEAR_OF_PRODUCTION = "year_of_production" ;
+  @BioTag(type="String")
+  @BioSqlTag
+  public static final String PRODUCER = "producer" ;
+  @BioTag(type="Integer")
+  @BioSqlTag
+  public static final String ENGINE = "engine" ;
+  @BioTag(type="Integer")
+  @BioSqlTag
+  public static final String CYLINDERS = "cylinders" ;
+  @BioTag(type="Double")
+  public static final String FUEL_EFFICIENCY = "fuel_efficiency" ;
+  
+  @BioTag(type="Integer")
+  @BioSqlTag(isVersion=true)
+  public static final String VERSION = "version" ;
+}
+```
+Here we have added new tag ```VERSION``` you can also name it with different name. And we also add ```@BioSqlTag``` with ```isVersion=true```. Now BioSql knows that it should check version before update and merge.
+
+So during update if ```version < :version``` condition is satisfied update/merge is performed. For example:
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.VIN, "hs2123122h212") ;
+v.set(Vehicle.FUEL_EFFICIENCY, 19.2) ;
+v.set(Vehicle.VERSION, 1) ;
+
+int result = sql.update(v) ;
+int result2 = sql.update(v) ;
+
+v.set(Vehicle.VERSION, v.getInt(Vehicle.VERSION) + 1) ;
+int result3 = sql.update(v) ;
+```
+Here ```result``` will be 1 and ```result2``` will be 0 because same version has already been updated. And ```result3``` will be 1 again because before update we have increased version. It is very useful when you are developing distributed and fault tolerant systems and want to keep your system data consistent.

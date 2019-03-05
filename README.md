@@ -238,3 +238,18 @@ v.set(Vehicle.VERSION, v.getInt(Vehicle.VERSION) + 1) ;
 int result3 = sql.update(v) ;
 ```
 Here ```result``` will be 1 and ```result2``` will be 0 because same version has already been updated. And ```result3``` will be 1 again because before update we have increased version. It is very useful when you are developing distributed and fault tolerant systems and want to keep your system data consistent.
+
+**Note that** there can only be one version tag for a Bio Object.
+
+Also if you want to bypass versioning and update object anyway but don't know version. You can set version as -1 and system will ignore version checking for this particular update. For Example:
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.VIN, "hs2123122h212") ;
+v.set(Vehicle.FUEL_EFFICIENCY, 19.2) ;
+v.set(Vehicle.VERSION, -1) ;
+
+int result = sql.update(v) ;
+int result2 = sql.update(v) ;
+
+```
+Here both ```result``` and ```result2``` returns 1 because we have skipped version control. Version remains same but data is being updated or merged.

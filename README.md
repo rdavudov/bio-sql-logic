@@ -237,7 +237,9 @@ int result2 = sql.update(v) ;
 v.set(Vehicle.VERSION, v.getInt(Vehicle.VERSION) + 1) ;
 int result3 = sql.update(v) ;
 ```
-Here ```result``` will be 1 and ```result2``` will be 0 because same version has already been updated. And ```result3``` will be 1 again because before update we have increased version. It is very useful when you are developing distributed and fault tolerant systems and want to keep your system data consistent.
+Here ```result``` will be 1 and ```result2``` will be 0 because same version has already been updated. And ```result3``` will be 1 again because before update we have increased version. 
+
+### It is very useful feature when you are developing distributed and fault tolerant systems and want to keep your system data consistent.
 
 **Note that** there can only be one version tag for a Bio Object.
 

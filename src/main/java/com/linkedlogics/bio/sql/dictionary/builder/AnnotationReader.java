@@ -257,7 +257,7 @@ public class AnnotationReader implements DictionaryReader {
 		if (tag != null) {
 			BioSqlRelationTag relationAnnotation = (BioSqlRelationTag) f.getAnnotation(BioSqlRelationTag.class) ;
 			
-			return createRelation(relationAnnotation.relateColumn(), relationAnnotation.toColumn(), relationAnnotation.relateColumns(), relationAnnotation.toColumns(), tag) ;
+			return createRelation(relationAnnotation.relateColumns(), relationAnnotation.toColumns(), tag) ;
 		} else {
 			throw new DictionaryException("@BioSqlRelationTag must be used together with @BioTag annotation in class " + obj.getBioClass()) ;
 		}
@@ -310,15 +310,10 @@ public class AnnotationReader implements DictionaryReader {
 		return column ;
 	}
 	
-	private BioRelation createRelation(String relateColumn, String toColumn, String[] relateColumns, String[] toColumns, BioTag tag) {
+	private BioRelation createRelation(String[] relateColumns, String[] toColumns, BioTag tag) {
 		BioRelation relation = new BioRelation(tag) ;
-		if (relateColumn != null && relateColumn.length() > 0) {
-			relation.setRelateKeys(new String[] {relateColumn});
-			relation.setToKeys(new String[] {toColumn});
-		} else {
-			relation.setRelateKeys(relateColumns);
-			relation.setToKeys(toColumns);
-		}
+		relation.setRelateKeys(relateColumns);
+		relation.setToKeys(toColumns);
 		
 		return relation ;
 	}

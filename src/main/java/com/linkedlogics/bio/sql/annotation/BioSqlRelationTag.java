@@ -8,8 +8,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface BioSqlRelationTag {
-	String relateColumn() ;
-	String toColumn() ;
 	String[] relateColumns() default "";
 	String[] toColumns() default "";
 }

@@ -1,4 +1,4 @@
-# Bio Sql
+# Bio SQL
 Bio Sql is an SQL wrapper for Bio Objects where basic CRUD operations are supported. You only need to add ```@BioSql``` and ```@BioSqlTag``` annotations to your objects and tags. 
 
 ## Features
@@ -111,6 +111,7 @@ v.set("undefined tag", "Hello world") ;
 int result = sql.insert(v) ;
 ```
 if ```result > 0``` it means that object is inserted. It will throw SQLException if something bad happens.
+Only values of tags having ```@BioSqlTag``` annotation will be inserted rest will be ignored.
 
 ## Selecting Bio Objects
 There are two ways of selecting. One is with single primary key, and another one with multiple keys or any condition.
@@ -130,3 +131,127 @@ List<Vehicle> list = sql.select(null, new Where("year_of_production > ?") {{
     setInt(1, 2015) ;
 }});
 ```
+
+## Updating Bio Objects
+You have to provide Bio Object with PK value inside as following:
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.VIN, "hs2123122h212") ;
+v.set(Vehicle.FUEL_EFFICIENCY, 19.2) ;
+
+int result = sql.update(v) ;
+```
+if ```result > 0``` it means that object is updated. It will throw SQLException if something bad happens.
+**Note that** ```update()``` will set to NULL if any tag is missing inside Bio Object. If you want to update only some of the fields then you have to use ```merge()```
+
+In order to update based on condition you have to use ```Where``` class as following:
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.FUEL_EFFICIENCY, 19.2) ;
+
+List<Vehicle> list = sql.update(v, new Where("year_of_production > ?") {{
+    setInt(1, 2015) ;
+}});
+```
+
+## Merging Bio Objects
+Merging only updates existing values inside Bio Object, remaning columns will be untouched.
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.VIN, "hs2123122h212") ;
+v.set(Vehicle.FUEL_EFFICIENCY, 19.2) ;
+
+int result = sql.merge(v) ;
+```
+if ```result > 0``` it means that object is updated. It will throw SQLException if something bad happens.
+
+In order to merge based on condition you have to use ```Where``` class as following:
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.FUEL_EFFICIENCY, 19.2) ;
+
+List<Vehicle> list = sql.merge(v, new Where("year_of_production > ?") {{
+    setInt(1, 2015) ;
+}});
+```
+
+## Deleting Bio Objects
+You have to provide Bio Object only with PK value inside as following:
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.VIN, "hs2123122h212") ;
+
+int result = sql.delete(v) ;
+```
+if ```result > 0``` it means that object is updated. It will throw SQLException if something bad happens.
+
+In order to delete based on condition you have to use ```Where``` class as following:
+```java
+List<Vehicle> list = sql.delete(null, new Where("year_of_production > ?") {{
+    setInt(1, 2015) ;
+}});
+```
+
+## Bio SQL Versioned Update and Merge
+If you are using ```isVersion``` property then it means that any update/merge will be checked for version first. Here it is how it works.
+First we need to specify which tag/column is holding object's version.
+```java
+@BioObj
+@BioSql(schema="test", table="vehicles")
+public class Vehicle extends BioObject {
+  @BioTag(type="String")
+  @BioSqlTag(isKey=true, column="vin_id")
+  public static final String VIN = "vin" ;
+  @BioTag(type="Integer")
+  @BioSqlTag
+  public static final String YEAR_OF_PRODUCTION = "year_of_production" ;
+  @BioTag(type="String")
+  @BioSqlTag
+  public static final String PRODUCER = "producer" ;
+  @BioTag(type="Integer")
+  @BioSqlTag
+  public static final String ENGINE = "engine" ;
+  @BioTag(type="Integer")
+  @BioSqlTag
+  public static final String CYLINDERS = "cylinders" ;
+  @BioTag(type="Double")
+  public static final String FUEL_EFFICIENCY = "fuel_efficiency" ;
+  
+  @BioTag(type="Integer")
+  @BioSqlTag(isVersion=true)
+  public static final String VERSION = "version" ;
+}
+```
+Here we have added new tag ```VERSION``` you can also name it with different name. And we also add ```@BioSqlTag``` with ```isVersion=true```. Now BioSql knows that it should check version before update and merge.
+
+So during update if ```version < :version``` condition is satisfied update/merge is performed. For example:
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.VIN, "hs2123122h212") ;
+v.set(Vehicle.FUEL_EFFICIENCY, 19.2) ;
+v.set(Vehicle.VERSION, 1) ;
+
+int result = sql.update(v) ;
+int result2 = sql.update(v) ;
+
+v.set(Vehicle.VERSION, v.getInt(Vehicle.VERSION) + 1) ;
+int result3 = sql.update(v) ;
+```
+Here ```result``` will be 1 and ```result2``` will be 0 because same version has already been updated. And ```result3``` will be 1 again because before update we have increased version. 
+
+### It is very useful feature when you are developing distributed and fault tolerant systems and want to keep your system data consistent.
+
+**Note that** there can only be one version tag for a Bio Object.
+
+Also if you want to bypass versioning and update object anyway but don't know version. You can set version as -1 and system will ignore version checking for this particular update. For Example:
+```java
+Vehicle v = new Vehicle() ;
+v.set(Vehicle.VIN, "hs2123122h212") ;
+v.set(Vehicle.FUEL_EFFICIENCY, 19.2) ;
+v.set(Vehicle.VERSION, -1) ;
+
+int result = sql.update(v) ;
+int result2 = sql.update(v) ;
+
+```
+Here both ```result``` and ```result2``` returns 1 because we have skipped version control. Version remains same but data is being updated or merged.

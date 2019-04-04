@@ -4,8 +4,8 @@ Bio Sql is an SQL wrapper for Bio Objects where basic CRUD operations are suppor
 ## Features
 - Simple way of CRUD operations w/o writing queries
 - Version control for objects (older version does not overwrite newer ones)
-- Ability to store primitive arrays in CSV format in single column
-- Ability to store Bio Objects in JSON/XML format in single column
+- Ability to store primitive arrays in CSV format in single column (Denormalization of arrays)
+- Ability to store Bio Objects in JSON/XML format in single column (Denormalization of composed objects)
 - Definition of relations of One-to-One and One-To-Many
 - Enums can be stored as numbers or strings
 

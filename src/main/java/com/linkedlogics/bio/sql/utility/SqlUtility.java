@@ -251,7 +251,6 @@ public class SqlUtility {
 		case String:
 		case UtfString:
 		case BioObject:
-		case Properties:
 			return Types.VARCHAR ;
 		}
 		return -1 ;
@@ -578,7 +577,6 @@ public class SqlUtility {
                     	}
                     }
                     return null;
-                case Properties:
                 case BioObject:
                     if (rs.getString(index) != null) {
                     	return binaryParser.decode(ByteUtility.hexToBytes(rs.getString(index)));

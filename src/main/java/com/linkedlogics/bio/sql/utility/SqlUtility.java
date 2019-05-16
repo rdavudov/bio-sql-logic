@@ -293,7 +293,7 @@ public class SqlUtility {
 					if (column.isCompressed()) {
 						setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, ((BioObject) value).toJson().toString());
 					} else {
-						setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, ((BioObject) value).toJson().toString(4));
+						setParameter(ps, index, column.isClob() ? Types.CLOB : Types.VARCHAR, ((BioObject) value).toJson());
 					}
 				}
 			} else if (column.isXml()) {

@@ -7,6 +7,7 @@
  */
 module com.linkedlogics.bio.sql {
 	exports com.linkedlogics.bio.sql;
+	exports com.linkedlogics.bio.sql.annotation;
 
 	requires com.linkedlogics.bio;
 	requires io.github.classgraph;

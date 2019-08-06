@@ -506,7 +506,7 @@ public class BioSql<T extends BioObject> implements AutoCloseable {
 	 * @throws SQLException
 	 */
 	public int delete(Where where) throws SQLException {
-		return delete(null, table.getWhere()) ;
+		return delete(null, where) ;
 	}
 	/**
 	 * Deletes bio objects based on condition

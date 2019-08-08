@@ -1,5 +1,6 @@
 package com.linkedlogics.bio.sql;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.net.URL;
@@ -34,20 +35,15 @@ public class BioDictionaryBuilder extends com.linkedlogics.bio.BioDictionaryBuil
 	 * @return
 	 */
 	public BioDictionaryBuilder addTableFile(String xmlFile) {
-		try {
-			readers.add(new XmlReader(new FileInputStream(xmlFile))) ;
-			return this ;
-		} catch (FileNotFoundException e) {
-			throw new DictionaryException(e) ;
+		File f = new File(xmlFile) ;
+		if (f.exists()) {
+			try {
+				readers.add(new XmlReader(new FileInputStream(xmlFile))) ;
+			} catch (FileNotFoundException e) { }
+		} else {
+			readers.add(new XmlReader(this.getClass().getClassLoader().getResourceAsStream(xmlFile))) ;
 		}
-	}
-	/**
-	 * Adding xml resource name for gathering bio obj info from xml
-	 * @param resource
-	 * @return
-	 */
-	public BioDictionaryBuilder addTableResource(String resource) {
-		readers.add(new XmlReader(this.getClass().getClassLoader().getResourceAsStream(resource))) ;
+		
 		return this ;
 	}
 	/**

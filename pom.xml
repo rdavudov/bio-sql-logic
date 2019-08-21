@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.linkedlogics.bio</groupId>
 	<artifactId>bio-sql-logic</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0-SNAPSHOT</version>
 
 	<build>
 		<plugins>
@@ -19,12 +19,25 @@
 			</plugin>
 		</plugins>
 	</build>
+	
+	<distributionManagement>
+		<repository>
+			<id>central</id>
+			<name>localhost-releases</name>
+			<url>http://172.18.188.211:8081/artifactory/LLC</url>
+		</repository>
+		<snapshotRepository>
+			<id>snapshots</id>
+			<name>localhost-snapshots</name>
+			<url>http://172.18.188.211:8081/artifactory/LLC</url>
+		</snapshotRepository>
+	</distributionManagement>	
 
 	<dependencies>
 		<dependency>
 			<groupId>com.linkedlogics.bio</groupId>
 			<artifactId>bio-object-logic</artifactId>
-			<version>0.0.2-SNAPSHOT</version>
+			<version>1.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>net.jpountz.lz4</groupId>
